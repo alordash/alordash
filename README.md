@@ -5,14 +5,16 @@
 ### 1. **[parse-word-to-number](https://github.com/alordash/parse-word-to-number)**
 
 Replaces words with corresponding numbers.  
-<img src="previews/parse-word-to-number.png" width="300px"/>
+
+<img src="previews/parse-word-to-number.png" width="450px"/>
 
 ##### Library perceives misspellings.
 
 ### 2. **[date-parser](https://github.com/alordash/date-parser)**
 
 Extracts date infromation from natural speech.  
-<img src="previews/date-parser.png" width="300px"/>
+
+<img src="previews/date-parser.png" width="450px"/>
 
 ##### Library perceives misspellings.
 
@@ -20,24 +22,33 @@ Extracts date infromation from natural speech.
 
 Telegram bot that implements features provided by two top librarries.  
 In two words: creates reminders.  
+
 <img src="previews/BotSmartScheduler.png" width="450px"/>
 
 ## Drawings
 
 ### 1. **[Bezier curves](https://github.com/alordash/BezierCurve)**
-Draws arbitrary bezier curves. [>>Click<<](https://alordash.github.io/BezierCurve/Code/static/index.html) to open in your browser.  
+Draws arbitrary bezier curves.  
+[>>Click<<](https://alordash.github.io/BezierCurve/Code/static/index.html) to open in your browser.  
+
 <img src="previews/BezierCurve.png" width="450px"/>
 
 ### 2. **[L-systems](https://github.com/alordash/L-Systems)**
-Draws various L-systems. [>>Click<<](https://alordash.github.io/L-Systems/static/index.html) to open in your browser.  
+Draws various L-systems.  
+[>>Click<<](https://alordash.github.io/L-Systems/static/index.html) to open in your browser.  
+
 <img src="previews/L-Systems.png" width="450px"/>
 
 ### 3. **[Maze generator](https://github.com/alordash/MazeGeneration)**
-Draws mazes. [>>Click<<](https://alordash.github.io/MazeGeneration/static/index.html) to open in your browser.  
+Draws mazes.  
+[>>Click<<](https://alordash.github.io/MazeGeneration/static/index.html) to open in your browser.  
+
 <img src="previews/MazeGeneration_1.png" width="225px"/><img src="previews/MazeGeneration_2.png" width="225px"/>
 
 ### 4. **[Diffusion limited aggregation](https://github.com/alordash/DLA)**
-Simulates DLA. [>>Click<<](https://alordash.github.io/DLA/static/index.html) to open in your browser.  
+Simulates DLA.  
+[>>Click<<](https://alordash.github.io/DLA/static/index.html) to open in your browser.  
+
 <img src="previews/DLA.png" width="450px"/>
 
 
