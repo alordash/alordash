@@ -20,8 +20,8 @@ Extracts date infromation from natural speech.
 
 ### 3. **[Smart Scheduler](https://github.com/alordash/BotSmartScheduler)**
 
-Telegram bot that implements features provided by these libraries.  
-In two words: creates reminders.  
+Telegram bot that implements features provided by [parse-word-to-number](https://github.com/alordash/parse-word-to-number) and [date-parser](https://github.com/alordash/date-parser).  
+Hence creates reminders.  
 
 <img src="previews/BotSmartScheduler.png" width="450px"/>
 
