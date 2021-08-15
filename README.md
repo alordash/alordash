@@ -4,7 +4,7 @@
 
 ### 1. **[parse-word-to-number](https://github.com/alordash/parse-word-to-number)**
 
-Converts words to numbers if possible.  
+Converts words to corresponding numbers.  
 
 <img src="previews/parse-word-to-number.png" width="450px"/>
 
