@@ -4,7 +4,7 @@
 
 ### 1. **[parse-word-to-number](https://github.com/alordash/parse-word-to-number)**
 
-Replaces words with corresponding numbers.  
+Converts words to corresponding numbers.  
 
 <img src="previews/parse-word-to-number.png" width="450px"/>
 
@@ -20,8 +20,8 @@ Extracts date infromation from natural speech.
 
 ### 3. **[Smart Scheduler](https://github.com/alordash/BotSmartScheduler)**
 
-Telegram bot that implements features provided by two top librarries.  
-In two words: creates reminders.  
+Telegram bot that implements features provided by [parse-word-to-number](https://github.com/alordash/parse-word-to-number) and [date-parser](https://github.com/alordash/date-parser).  
+Hence creates reminders.  
 
 <img src="previews/BotSmartScheduler.png" width="450px"/>
 
