@@ -59,7 +59,7 @@ Runtime [matrix determinant](https://en.wikipedia.org/wiki/Determinant) calculat
 
 ### [>>Click<<](https://alordash.github.io/MatrixDeterminant/publish/wwwroot/) to open in your browser.  
 
-![Demo](previews/MatrixDeterminantCalculator.png)
+![MDC_Demo](previews/MatrixDeterminantCalculator.png)
 
 
 <!--
