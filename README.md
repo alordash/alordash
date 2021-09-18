@@ -51,7 +51,15 @@ Simulates DLA.
 
 <img src="previews/DLA.png" width="450px"/>
 
+## Web apps
 
+### **[Matrix determinant calculator](https://github.com/alordash/MatrixDeterminant)**
+
+Runtime [matrix determinant](https://en.wikipedia.org/wiki/Determinant) calculator.
+
+### [>>Click<<](https://alordash.github.io/MatrixDeterminant/publish/wwwroot/) to open in your browser.  
+
+![Demo](previews/MatrixDeterminantCalculator.png)
 
 
 <!--
