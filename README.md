@@ -51,7 +51,7 @@ Simulates DLA.
 
 <img src="previews/DLA.png" width="450px"/>
 
-## Web apps
+## PWAs
 
 ### **[Matrix determinant calculator](https://github.com/alordash/MatrixDeterminant)**
 
