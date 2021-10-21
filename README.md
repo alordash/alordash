@@ -61,6 +61,13 @@ Runtime [matrix determinant](https://en.wikipedia.org/wiki/Determinant) calculat
 
 ![MDC_Demo](previews/MatrixDeterminantCalculator.png)
 
+### **[Fast exponentiation](https://github.com/alordash/FastExponentiation)**
+
+Site for running precision tests for various fast exponentiation algorithms.  
+
+### [>>Click<<](https://alordash.github.io/FastExponentiation/publish/wwwroot/) to open in your browser.  
+
+![FE_Demo](https://raw.githubusercontent.com/alordash/FastExponentiation/main/Previews/Chart.png)
 
 <!--
 **alordash/alordash** is a ✨ _special_ ✨ repository because its `README.md` (this file) appears on your GitHub profile.
