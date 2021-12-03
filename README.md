@@ -1,4 +1,4 @@
-[![GitHub stats](https://github-readme-stats.vercel.app/api?username=alordash&count_private=true)](https://github.com/anuraghazra/github-readme-stats)
+# Stuff I do
 
 ## JS
 
@@ -51,7 +51,7 @@ Simulates DLA.
 
 <img src="previews/DLA.png" width="450px"/>
 
-## Static web sites
+## Static web apps
 
 ### **[Matrix determinant calculator](https://github.com/alordash/MatrixDeterminant)**
 
