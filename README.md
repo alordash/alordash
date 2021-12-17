@@ -1,5 +1,3 @@
-# Stuff I do
-
 ## JS
 
 ### 1. **[parse-word-to-number](https://github.com/alordash/parse-word-to-number)**
