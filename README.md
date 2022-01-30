@@ -1,4 +1,4 @@
-Hi 👋, I write code sometimes
+Hi 👋, I write code
 
 List of my projects:
 
