@@ -18,11 +18,13 @@ List of my projects:
 
 ### 7. **[Diffusion limited aggregation](https://github.com/alordash/DLA)** simulates DLA. ([>>demo<<](https://alordash.github.io/DLA/static/index.html))
 
+### 8. **[Newton's fractal](https://github.com/alordash/newton-fractal)** renderer with different techniques. ([>>demo<<](https://alordash.github.io/newton-fractal/www/index.html))
+
 ---
 
-### 8. **[Matrix determinant calculator](https://github.com/alordash/MatrixDeterminant)** calculates matrix determinant. ([>>demo<<](https://alordash.github.io/MatrixDeterminant/publish/wwwroot/))
+### 9. **[Matrix determinant calculator](https://github.com/alordash/MatrixDeterminant)** calculates matrix determinant. ([>>demo<<](https://alordash.github.io/MatrixDeterminant/publish/wwwroot/))
 
-### 9. **[Fast exponentiation](https://github.com/alordash/FastExponentiation)** collection of various fast exponentiation algorithms. ([>>demo<<](https://alordash.github.io/FastExponentiation/publish/wwwroot/))
+### 10. **[Fast exponentiation](https://github.com/alordash/FastExponentiation)** collection of various fast exponentiation algorithms. ([>>demo<<](https://alordash.github.io/FastExponentiation/publish/wwwroot/))
 
 <!--
 **alordash/alordash** is a ✨ _special_ ✨ repository because its `README.md` (this file) appears on your GitHub profile.
