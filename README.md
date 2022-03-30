@@ -1,30 +1,31 @@
 Hi 👋, I write code
 
-List of my projects:
+List of my main projects:
 
-### 1. **[parse-word-to-number](https://github.com/alordash/parse-word-to-number)** converts words in string to corresponding numbers.
 
-### 2. **[date-parser](https://github.com/alordash/date-parser)** extracts date information from natural speech.
+1. **[parse-word-to-number](https://github.com/alordash/parse-word-to-number)** converts words in string to corresponding numbers.
 
-### 3. **[Smart Scheduler](https://github.com/alordash/BotSmartScheduler)** telegram bot that creates reminders from natural speech and notifies user.
+2. **[date-parser](https://github.com/alordash/date-parser)** extracts date information from natural speech.
 
----
-
-### 4. **[Bezier curves](https://github.com/alordash/BezierCurve)** draws bezier curves with unlimited number of control points. ([>>demo<<](https://alordash.github.io/BezierCurve/Code/static/index.html))
-
-### 5. **[L-systems](https://github.com/alordash/L-Systems)** draws various L-systems. ([>>demo<<](https://alordash.github.io/L-Systems/static/index.html))
-
-### 6. **[Maze generator](https://github.com/alordash/MazeGeneration)** draws mazes. ([>>demo<<](https://alordash.github.io/MazeGeneration/static/index.html))
-
-### 7. **[Diffusion limited aggregation](https://github.com/alordash/DLA)** simulates DLA. ([>>demo<<](https://alordash.github.io/DLA/static/index.html))
-
-### 8. **[Newton's fractal](https://github.com/alordash/newton-fractal)** renderer with different techniques. ([>>demo<<](https://alordash.github.io/newton-fractal/www/index.html))
+3. **[Smart Scheduler](https://github.com/alordash/BotSmartScheduler)** telegram bot that creates reminders from natural speech and notifies user.
 
 ---
 
-### 9. **[Matrix determinant calculator](https://github.com/alordash/MatrixDeterminant)** calculates matrix determinant. ([>>demo<<](https://alordash.github.io/MatrixDeterminant/publish/wwwroot/))
+4. **[Bezier curves](https://github.com/alordash/BezierCurve)** draws bezier curves with unlimited number of control points. **([>>demo<<](https://alordash.github.io/BezierCurve/Code/static/index.html))**
 
-### 10. **[Fast exponentiation](https://github.com/alordash/FastExponentiation)** collection of various fast exponentiation algorithms. ([>>demo<<](https://alordash.github.io/FastExponentiation/publish/wwwroot/))
+5. **[L-systems](https://github.com/alordash/L-Systems)** draws various L-systems. **([>>demo<<](https://alordash.github.io/L-Systems/static/index.html))**
+
+6. **[Maze generator](https://github.com/alordash/MazeGeneration)** draws mazes. **([>>demo<<](https://alordash.github.io/MazeGeneration/static/index.html))**
+
+7. **[Diffusion limited aggregation](https://github.com/alordash/DLA)** simulates DLA. **([>>demo<<](https://alordash.github.io/DLA/static/index.html))**
+
+8. **[Newton's fractal](https://github.com/alordash/newton-fractal)** renderer with different techniques. **([>>demo<<](https://alordash.github.io/newton-fractal/www/index.html))**
+
+---
+
+9. **[Matrix determinant calculator](https://github.com/alordash/MatrixDeterminant)** calculates matrix determinant. **([>>demo<<](https://alordash.github.io/MatrixDeterminant/publish/wwwroot/))**
+
+10. **[Fast exponentiation](https://github.com/alordash/FastExponentiation)** collection of various fast exponentiation algorithms. **([>>demo<<](https://alordash.github.io/FastExponentiation/publish/wwwroot/))**
 
 <!--
 **alordash/alordash** is a ✨ _special_ ✨ repository because its `README.md` (this file) appears on your GitHub profile.
