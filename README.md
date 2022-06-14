@@ -1,6 +1,6 @@
 Hi 👋, I write code
 
-Lists of my main projects:
+List of my main projects:
 
 <details>
 
