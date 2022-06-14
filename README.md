@@ -4,7 +4,7 @@ List of my main projects:
 
 <details>
 
-  <summary><h4>Natural speech processing</h3></summary>
+  <summary><h4>Natural language processing</h3></summary>
 
 1. **[parse-word-to-number](https://github.com/alordash/parse-word-to-number)** converts words in string to corresponding numbers.
 
