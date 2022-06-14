@@ -16,7 +16,7 @@ List of my main projects:
 
 <details>
 
-  <summary><h4>Procedure graphics</h4></summary>
+  <summary><h4>Procedural graphics</h4></summary>
 
 1. **[Bezier curves](https://github.com/alordash/BezierCurve)** draws bezier curves with unlimited number of control points. **([>>demo<<](https://alordash.github.io/BezierCurve/Code/static/index.html))**
 
