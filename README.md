@@ -40,6 +40,8 @@ List of my main projects:
   
 </details>
 
+[![](https://img.shields.io/badge/ayy-lmao-red)](https://www.youtube.com/watch?v=seFHSuL0nsw)
+
 <!--
 **alordash/alordash** is a ✨ _special_ ✨ repository because its `README.md` (this file) appears on your GitHub profile.
 
@@ -54,4 +56,4 @@ Here are some ideas to get you started:
 - 😄 Pronouns: ...
 - ⚡ Fun fact: ...
 -->
-![](https://hit.yhype.me/github/profile?user_id=54469554)
+[![](https://hit.yhype.me/github/profile?user_id=54469554)](https://youtu.be/oHg5SJYRHA0)
