@@ -2,7 +2,6 @@ Hi 👋,
 
 I like to code.
 
-### Tech stack
 [![](https://img.shields.io/badge/ayy-lmao-red)](https://www.youtube.com/watch?v=seFHSuL0nsw)
 
 <!--
