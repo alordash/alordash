@@ -1,7 +1,3 @@
-Hi 👋,
-
-I like to code.
-
 [![](https://img.shields.io/badge/ayy-lmao-red)](https://www.youtube.com/watch?v=seFHSuL0nsw)
 
 <!--
