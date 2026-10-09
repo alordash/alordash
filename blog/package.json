@@ -1,0 +1,9 @@
+{
+  "scripts": {
+    "build:ts": "tsc -p tsconfig.json",
+    "watch:ts": "tsc -p tsconfig.json --watch"
+  },
+  "devDependencies": {
+    "typescript": "7.0.2"
+  }
+}

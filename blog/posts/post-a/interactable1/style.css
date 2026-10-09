@@ -1,0 +1,34 @@
+
+body {
+    font: 15px/1.4 system-ui, sans-serif;
+    margin: 12px;
+}
+
+#grid {
+    display: grid;
+    grid-template-columns: repeat(8, minmax(0, 1fr));
+    gap: 4px;
+    max-width: 420px;
+}
+
+.cell {
+    aspect-ratio: 1;
+    border: 1px solid #aaa;
+    border-radius: 4px;
+    background: #f2f2f2;
+    cursor: pointer;
+}
+
+.cell.active {
+    background: #3686df;
+    border-color: #1769aa;
+}
+
+.cell:focus-visible {
+    outline: 2px solid #111;
+    outline-offset: 2px;
+}
+
+p {
+    margin-top: 12px;
+}
