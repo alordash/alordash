@@ -1,0 +1,46 @@
+
+body {
+    max-width: 800px;
+    margin: 40px auto;
+    padding: 0 20px;
+    font: 18px/1.6 system-ui, sans-serif;
+    color: #222;
+    background: #fff;
+}
+
+header {
+    padding-bottom: 16px;
+    border-bottom: 1px solid #ddd;
+    margin-bottom: 32px;
+}
+
+header a {
+    font-weight: bold;
+    text-decoration: none;
+}
+
+a {
+    color: #1769aa;
+}
+
+img {
+    max-width: 100%;
+}
+
+pre {
+    overflow-x: auto;
+    padding: 16px;
+    background: #f4f4f4;
+    border-radius: 6px;
+}
+
+code {
+    font-family: ui-monospace, monospace;
+}
+
+iframe {
+    display: block;
+    width: 100%;
+    border: 0;
+    margin: 24px 0;
+}
