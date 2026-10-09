@@ -1,5 +1,5 @@
 
-name: Build and deploy blog
+name: Build and deploy website
 
 on:
   push:
@@ -21,9 +21,6 @@ jobs:
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
-    defaults:
-      run:
-        working-directory: ./blog
 
     steps:
       - name: Checkout repository
@@ -36,7 +33,7 @@ jobs:
           cache: npm
 
       - name: Build website
-        run: bash build.sh
+        run: bash rebuild.sh
 
       - name: Configure GitHub Pages
         uses: actions/configure-pages@v5

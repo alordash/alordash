@@ -7,7 +7,7 @@ rm -rf dist
 mkdir -p dist
 
 cp index.html style.css dist/
-cp -R posts dist/
+cp -R blog dist/
 
 npm run build:ts
 

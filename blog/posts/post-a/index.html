@@ -1,36 +1,33 @@
-
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>An Interactive Grid — My Software Blog</title>
-    <link rel="stylesheet" href="../../style.css">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <title>An Interactive Grid — Test Blog</title>
+        <link rel="stylesheet" href="../../style.css" />
 
-    <script type="module">
-        import { marked } from
-            "https://cdn.jsdelivr.net/npm/marked/lib/marked.esm.js";
+        <script type="module">
+            import { marked } from "https://cdn.jsdelivr.net/npm/marked/lib/marked.esm.js";
 
-        marked.setOptions({ gfm: true });
+            marked.setOptions({ gfm: true });
 
-        const response = await fetch("./index.md");
+            const response = await fetch("./index.md");
 
-        if (!response.ok) {
-            throw new Error(`Failed to load Markdown: ${response.status}`);
-        }
+            if (!response.ok) {
+                throw new Error(`Failed to load Markdown: ${response.status}`);
+            }
 
-        const markdown = await response.text();
-        document.querySelector("#post").innerHTML =
-            marked.parse(markdown);
-    </script>
-</head>
-<body>
-    <header>
-        <a href="../../">My Software Blog</a>
-    </header>
+            const markdown = await response.text();
+            document.querySelector("#post").innerHTML = marked.parse(markdown);
+        </script>
+    </head>
+    <body>
+        <header>
+            <a href="../../../">Home</a>
+            •
+            <a href="../../">Blog</a>
+        </header>
 
-    <main id="post">
-        Loading article...
-    </main>
-</body>
+        <main id="post">Loading article...</main>
+    </body>
 </html>

@@ -1,18 +1,22 @@
 *
-!README.md
 !.gitignore
 !.gitattributes
+!index.html
+!local-serve.sh
+!package.json
+!package-lock.json
+!README.md
+!rebuild.sh
+!style.css
+!tsconfig.json
+!previews/
+!previews/*.png
+
 !.github/
 !.github/workflows/
 !.github/workflows/**
 
 !blog/
-!blog/build.sh
-!blog/local-serve.sh
-!blog/index.html
-!blog/package.json
-!blog/style.css
-!blog/tsconfig.json
 
 !blog/posts/
 
