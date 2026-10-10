@@ -29,8 +29,15 @@ async function renderPost() {
 
 function showPostDates() {
     for (const link of main.querySelectorAll<HTMLAnchorElement>("li a")) {
-        loadPost(link.href).then(post => link.before(createDateElement(post.date)));
+        const time = document.createElement("time");
+        link.before(time);
+        fillDate(link.href, time);
     }
+}
+
+async function fillDate(postUrl: string, time: HTMLTimeElement) {
+    const post = await loadPost(postUrl);
+    setDate(time, post.date);
 }
 
 async function loadPost(postUrl: string): Promise<Post> {
@@ -54,8 +61,11 @@ async function loadPost(postUrl: string): Promise<Post> {
 
 function createDateElement(date: string) {
     const time = document.createElement("time");
+    setDate(time, date);
+    return time;
+}
 
+function setDate(time: HTMLTimeElement, date: string) {
     time.dateTime = date;
     time.textContent = new Date(date).toLocaleDateString("en", { dateStyle: "medium", timeZone: "UTC" });
-    return time;
 }
