@@ -1,9 +1,12 @@
 {
+  "type": "module",
   "scripts": {
     "build:ts": "tsc -p tsconfig.json",
     "watch:ts": "tsc -p tsconfig.json --watch"
   },
   "devDependencies": {
+    "@types/node": "^26.6.5",
+    "marked": "18.1.0",
     "typescript": "7.0.2"
   }
 }

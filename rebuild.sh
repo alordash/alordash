@@ -22,12 +22,8 @@ render_blog_page() {
 
 render_blog_page "../" > dist/blog/index.html
 
-for post_markdown in dist/blog/*/index.md; do
-    render_blog_page "../../" \
-        | sed '/<main>/,/<\/main>/c\        <main>Loading article...</main>' \
-        > "$(dirname "$post_markdown")/index.html"
-done
-
 npm run build:ts
+
+node dist/scripts/build-posts.js
 
 echo "Website built successfully in ./dist"

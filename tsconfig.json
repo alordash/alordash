@@ -9,9 +9,11 @@
     "rootDir": ".",
     "outDir": "dist",
     "noEmitOnError": true,
-    "sourceMap": true
+    "sourceMap": true,
+    "types": ["node"]
   },
   "include": [
-    "blog/**/*.ts"
+    "blog/**/*.ts",
+    "scripts/**/*.ts"
   ]
 }
