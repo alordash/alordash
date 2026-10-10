@@ -10,8 +10,6 @@ wait_for_key_press() {
 
 trap wait_for_key_press EXIT
 
-npm ci
-
 rm -rf dist
 mkdir -p dist
 

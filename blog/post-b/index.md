@@ -1,7 +1,3 @@
----
-date: 2026-10-10
----
-
 # Two Small Demos
 
 One post can hold any number of interactables. Each one lives in its own

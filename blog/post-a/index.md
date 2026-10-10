@@ -1,7 +1,3 @@
----
-date: 2026-10-09
----
-
 # An Interactive Grid
 
 Let's build a simple grid where you can click individual cells to

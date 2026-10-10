@@ -1,7 +1,3 @@
----
-date: 2026-10-10
----
-
 # Plain Markdown Post
 
 This post has no interactables. It is only Markdown, and it shows how
