@@ -18,7 +18,11 @@
 
 !blog/
 
-!blog/posts/
+!blog/post-a/
+!blog/post-a/**
 
-!blog/posts/post-a/
-!blog/posts/post-a/**
+!blog/post-b/
+!blog/post-b/**
+
+!blog/post-c/
+!blog/post-c/**

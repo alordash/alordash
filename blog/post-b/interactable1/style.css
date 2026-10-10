@@ -1,0 +1,25 @@
+
+body {
+    font: 15px/1.4 system-ui, sans-serif;
+    margin: 12px;
+}
+
+#mixer {
+    display: grid;
+    gap: 8px;
+    max-width: 320px;
+}
+
+label {
+    display: grid;
+    grid-template-columns: 60px 1fr;
+    align-items: center;
+}
+
+#swatch {
+    width: 120px;
+    height: 60px;
+    margin-top: 12px;
+    border: 1px solid #aaa;
+    border-radius: 6px;
+}

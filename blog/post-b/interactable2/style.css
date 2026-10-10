@@ -1,0 +1,32 @@
+
+body {
+    font: 15px/1.4 system-ui, sans-serif;
+    margin: 12px;
+}
+
+#bars {
+    display: grid;
+    grid-template-columns: repeat(11, minmax(0, 1fr));
+    align-items: end;
+    gap: 4px;
+    max-width: 440px;
+    height: 220px;
+}
+
+.bar {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    height: 100%;
+    text-align: center;
+    font-size: 12px;
+}
+
+.fill {
+    background: #3686df;
+    border-radius: 3px 3px 0 0;
+}
+
+p {
+    margin-top: 12px;
+}

@@ -1,0 +1,20 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <link rel="stylesheet" href="./style.css" />
+        <title>Color Mixer</title>
+    </head>
+    <body>
+        <div id="mixer">
+            <label>Red <input id="red" type="range" min="0" max="255" value="54" /></label>
+            <label>Green <input id="green" type="range" min="0" max="255" value="134" /></label>
+            <label>Blue <input id="blue" type="range" min="0" max="255" value="223" /></label>
+        </div>
+        <div id="swatch"></div>
+        <p>Hex: <code id="hex"></code></p>
+
+        <script type="module" src="./code.js"></script>
+    </body>
+</html>
