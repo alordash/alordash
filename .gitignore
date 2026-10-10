@@ -17,6 +17,8 @@
 !.github/workflows/**
 
 !blog/
+!blog/blog.ts
+!blog/marked.d.ts
 
 !blog/post-a/
 !blog/post-a/**

@@ -1,3 +1,6 @@
+---
+date: 2026-10-10
+---
 
 # Plain Markdown Post
 

@@ -44,3 +44,24 @@ iframe {
     border: 0;
     margin: 24px 0;
 }
+
+time {
+    color: #777;
+    font-size: 0.85em;
+}
+
+main > time {
+    display: block;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+main > time + h1 {
+    margin-top: 0;
+}
+
+li time {
+    display: inline-block;
+    min-width: 110px;
+    font-variant-numeric: tabular-nums;
+}

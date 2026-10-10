@@ -22,30 +22,6 @@
             </ul>
         </main>
 
-        <script>
-            const main = document.querySelector("main");
-            const isPostPage = new URL(".", location.href).href !== document.querySelector("#blog-link").href;
-
-            if (isPostPage) {
-                main.textContent = "Loading article...";
-                renderPost();
-            }
-
-            async function renderPost() {
-                const { marked } = await import("https://cdn.jsdelivr.net/npm/marked@18.1.0/lib/marked.esm.js");
-                const response = await fetch("./index.md");
-
-                if (!response.ok) {
-                    throw new Error(`Failed to load Markdown: ${response.status}`);
-                }
-
-                main.innerHTML = marked.parse(await response.text());
-
-                const heading = main.querySelector("h1");
-                if (heading) {
-                    document.title = `${heading.textContent} — ${document.title}`;
-                }
-            }
-        </script>
+        <script type="module" src="{{root}}blog/blog.js"></script>
     </body>
 </html>
