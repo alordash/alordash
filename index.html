@@ -3,16 +3,29 @@
     <head>
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <title>alordash</title>
+        <title>127.0.0.alordash</title>
         <link rel="stylesheet" href="./style.css" />
     </head>
     <body>
         <header>
-            <a href="./">Home</a>
+            <a id="blog-link" href="./">Home</a
+            ><span class="tagline">my thoughts about software development</span>
         </header>
 
         <main>
-            <h1><a href="./blog/">Blog</a></h1>
+            <h1>Posts</h1>
+            <ul>
+                <li>
+                    <time datetime="2026-10-12"></time
+                    ><a href="./blog/hotreload-in-rust/">Hotreload in Rust</a>
+                </li>
+            </ul>
+
+            <script type="module" src="./blog/blog.js"></script>
         </main>
+
+        <footer>
+            <a href="https://github.com/alordash">GitHub</a>
+        </footer>
     </body>
 </html>

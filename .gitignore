@@ -20,6 +20,9 @@
 !blog/blog.ts
 !blog/marked.d.ts
 
+!blog/hotreload-in-rust/
+!blog/hotreload-in-rust/**
+
 !blog/post-a/
 !blog/post-a/**
 

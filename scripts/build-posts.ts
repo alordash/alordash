@@ -7,25 +7,15 @@ marked.setOptions({ gfm: true });
 const root = process.cwd();
 const distBlog = join(root, "dist", "blog");
 
-function renderPostTemplate(rootRel: string, title: string, htmlContent: string): string {
-  return `<!doctype html>
-<html lang="en">
-    <head>
-        <meta charset="UTF-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <title>${escapeHtml(title)} — Test Blog</title>
-        <link rel="stylesheet" href="${rootRel}style.css" />
-    </head>
-    <body>
-        <header>
-            <a href="${rootRel}">Home</a>
-            •
-            <a href="${rootRel}blog/">Blog</a>
-        </header>
-
-        <main id="post">${htmlContent}</main>
-    </body>
-</html>`;
+function renderPostTemplate(
+  indexHtml: string,
+  postHtml: string,
+  title: string,
+): string {
+  return indexHtml
+    .replace(/<title>([\s\S]*?)<\/title>/i, `<title>${title}</title>`)
+    .replaceAll('href="./', 'href="../../')
+    .replace(/<main>[\s\S]*?<\/main>/i, `<main>${postHtml}</main>`);
 }
 
 function escapeHtml(s: string): string {
@@ -44,9 +34,9 @@ function extractTitle(md: string): string {
 
 const slugs = readdirSync(distBlog, { withFileTypes: true })
   .filter((d) => d.isDirectory())
-  .filter((d) => d.name.startsWith("post-"))
   .map((d) => d.name);
 
+const indexHtml = readFileSync(join(root, "index.html"), "utf8");
 for (const slug of slugs) {
   const postDir = join(distBlog, slug);
   const mdPath = join(postDir, "index.md");
@@ -54,7 +44,7 @@ for (const slug of slugs) {
 
   const md = readFileSync(mdPath, "utf8");
   const title = extractTitle(md);
-  const html = marked.parse(md) as string;
-  const out = renderPostTemplate("../../", title, html);
+  const postHtml = marked.parse(md) as string;
+  const out = renderPostTemplate(indexHtml, postHtml, title);
   writeFileSync(join(postDir, "index.html"), out);
 }

@@ -1,5 +1,8 @@
 
 body {
+    display: flex;
+    flex-direction: column;
+    min-height: calc(100vh - 80px);
     max-width: 800px;
     margin: 40px auto;
     padding: 0 20px;
@@ -8,13 +11,40 @@ body {
     background: #fff;
 }
 
+main {
+    flex: 1;
+}
+
 header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
     padding-bottom: 16px;
     border-bottom: 1px solid #ddd;
     margin-bottom: 32px;
 }
 
+header .tagline {
+    color: #777;
+    font-size: 0.85em;
+    font-weight: normal;
+    font-style: italic;
+}
+
 header a {
+    font-weight: bold;
+    text-decoration: none;
+}
+
+footer {
+    margin-top: 48px;
+    padding-top: 16px;
+    border-top: 1px solid #ddd;
+    text-align: center;
+    font-size: 0.9em;
+}
+
+footer a {
     font-weight: bold;
     text-decoration: none;
 }

@@ -2,9 +2,16 @@
 set -euo pipefail
 
 wait_for_key_press() {
+    local status=$?
+    if [ "$status" -eq 0 ]; then
+        return
+    fi
+    echo "Rebuild failed with exit code $status." >&2
     if [ -t 0 ]; then
         read -n 1 -s -r -p "Press any key to exit..."
         echo
+    else
+        cmd //c pause
     fi
 }
 
@@ -15,12 +22,6 @@ mkdir -p dist
 
 cp index.html style.css dist/
 cp -R blog dist/
-
-render_blog_page() {
-    sed "s|{{root}}|$1|g" blog/index.html
-}
-
-render_blog_page "../" > dist/blog/index.html
 
 npm run build:ts
 
