@@ -27,7 +27,7 @@ function renderPostTemplate(
 ): string {
   return indexHtml
     .replace(/<title>([\s\S]*?)<\/title>/i, `<title>${title}</title>`)
-    .replaceAll('href="./', 'href="../../')
+    .replace(/(href|src)="\.\//g, '$1="../../')
     .replace(/<main>[\s\S]*?<\/main>/i, `<main>${postHtml}</main>`);
 }
 
