@@ -22,3 +22,6 @@
 
 !blog/hotreload-in-rust/
 !blog/hotreload-in-rust/**
+
+!blog/hot-reload-in-rust/
+!blog/hot-reload-in-rust/**
