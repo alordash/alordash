@@ -1,8 +1,21 @@
 import { marked } from "marked";
+import { markedHighlight } from "marked-highlight";
+import hljs from "highlight.js";
 import { readFileSync, writeFileSync, readdirSync, existsSync } from "fs";
 import { join } from "path";
 
 marked.setOptions({ gfm: true });
+
+marked.use(
+  markedHighlight({
+    langPrefix: "hljs language-",
+    emptyLangClass: "hljs",
+    highlight(code, language) {
+      const lang = hljs.getLanguage(language) ? language : "plaintext";
+      return hljs.highlight(code, { language: lang }).value;
+    },
+  }),
+);
 
 const root = process.cwd();
 const distBlog = join(root, "dist", "blog");

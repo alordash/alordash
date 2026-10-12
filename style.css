@@ -60,7 +60,7 @@ img {
 pre {
     overflow-x: auto;
     padding: 16px;
-    background: #f4f4f4;
+    background: #f6f8fa;
     border-radius: 6px;
 }
 
@@ -84,4 +84,26 @@ li time {
     display: inline-block;
     min-width: 110px;
     font-variant-numeric: tabular-nums;
+}
+
+.hljs-comment {
+    color: #59636e;
+    font-style: italic;
+}
+
+.hljs-keyword {
+    color: #cf222e;
+}
+
+.hljs-string {
+    color: #0a3069;
+}
+
+.hljs-title {
+    color: #8250df;
+}
+
+.hljs-type,
+.hljs-meta {
+    color: #953800;
 }
