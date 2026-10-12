@@ -23,7 +23,7 @@ To load dynamic library in Rust there is a [`libloading`](https://crates.io/crat
 use libloading::*;
 
 let lib = Library::new("/path/to/liblibrary.so").unwrap();
-let func: Symbol<unsafe extern "C" fn() -> u32> = lib.get(b"my_func").unwrap();
+let func: Symbol<unsafe extern "C" fn() -> u32> = lib.get(b"my_function_symbol").unwrap();
 func(); // call function loaded from dynamic library
 ```
 
@@ -31,4 +31,36 @@ Functions called from dynamic libraries have virtually no overhead, as they are 
 
 ## How to reload code with dynamic library
 
-One of simplest ways of achieving hot-reloading in Rust is to use dynamic libraries to update functions code. The idea is simple - instead of calling a statically linked function we load dynamic library and call dynamically linked function instead. Then, after we change our code, we will previously loaded library and load updated version.
+One of simplest ways of achieving hot-reloading in Rust is to use dynamic libraries to update functions code. The idea is simple - instead of calling a statically linked function we load dynamic library and call dynamically linked function instead. Then, after we change our code, we unload previously loaded library and load updated version. Conceptually, it looks something like that:
+
+```rust
+let lib = todo!("load dynamic library");
+let func = todo!("find our function");
+
+let first_result = func(); // use our function
+
+wait_for_dynamic_library_update();
+
+drop(lib); // unload dynamic library to free process memory
+let lib = todo!("reload dynamic library");
+let func = todo!("find our function again");
+
+let second_result = func(); // use changed version of our function
+
+assert_ne!(first_result, second_result);
+```
+
+This approach proofs the concept, but is far from convenient. Loading dynamic libraries, keeping them in memory, caching symbols so that we don't search for them on each function call - all of it is very tiresome to do manually. Before we fix all these problems, lets try to design a better solution.
+
+## High-level design
+
+Ideally, we would probably want to have to do minimum changes to our existing codebase in order to make hot-reloadable. It is certain that we need to reroute each function call to dynamic library symbol, but Rust doesn't have a runtime, so we can't add some kind of global hook that would be executed each time we call a function. I'm not sure, but perhaps we could patch Rust compiler to make it emit some instructions for dynamic library integration before each function call. However, this sounds very complicated and that's why I didn't try this approach.
+
+Instead, I suggest creating a [procedural macro](https://doc.rust-lang.org/reference/procedural-macros.html) that would modify our function. Procedural macroses allow us to modify Rust syntax before our code is compiled. They work directly on language's abstract syntax tree and that gives us all flexibility that we could possibly need to modify any function for our needs.
+
+We will try to keep this macros as simple as possible, without arguments. It could look like this:
+
+```rust
+#[hotreload]
+fn my_function() { } // calls to `my_function` should invoke function from dynamic library
+```
