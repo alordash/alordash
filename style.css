@@ -5,7 +5,7 @@
     --border: #ddd;
     --muted: #777;
     --link: #1769aa;
-    --code-bg: #f6f8fa;
+    --code-bg: #eaeef2;
     --hljs-comment: #59636e;
     --hljs-keyword: #cf222e;
     --hljs-string: #0a3069;
@@ -20,7 +20,7 @@
     --border: #30363d;
     --muted: #8b949e;
     --link: #4493f8;
-    --code-bg: #161b22;
+    --code-bg: #21262d;
     --hljs-comment: #8b949e;
     --hljs-keyword: #ff7b72;
     --hljs-string: #a5d6ff;
@@ -120,6 +120,19 @@ pre {
 
 code {
     font-family: ui-monospace, monospace;
+}
+
+:not(pre) > code {
+    padding: 2px 6px;
+    background: var(--code-bg);
+    border-radius: 6px;
+}
+
+details {
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 8px 12px;
+    margin: 16px 0;
 }
 
 iframe {
