@@ -17,6 +17,25 @@ marked.use(
   }),
 );
 
+function slugify(html: string): string {
+  return html
+    .toLowerCase()
+    .replace(/<[^>]*>/g, "")
+    .replace(/&[^;]*;/g, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
+marked.use({
+  renderer: {
+    heading({ tokens, depth }) {
+      const text = this.parser.parseInline(tokens);
+      const id = slugify(text);
+      return `<h${depth} id="${id}"><a class="header-anchor" href="#${id}" aria-label="Link to this header">#</a>${text}</h${depth}>\n`;
+    },
+  },
+});
+
 const root = process.cwd();
 const distBlog = join(root, "dist", "blog");
 

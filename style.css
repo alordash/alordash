@@ -140,6 +140,34 @@ li time {
     font-variant-numeric: tabular-nums;
 }
 
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+    position: relative;
+}
+
+.header-anchor {
+    position: absolute;
+    right: calc(100% - 1ch);
+    padding: 0 calc(1ch + 0.4em) 0 1.5em;
+    color: var(--muted);
+    text-decoration: none;
+    opacity: 0;
+}
+
+h1:hover .header-anchor,
+h2:hover .header-anchor,
+h3:hover .header-anchor,
+h4:hover .header-anchor,
+h5:hover .header-anchor,
+h6:hover .header-anchor,
+.header-anchor:focus {
+    opacity: 1;
+}
+
 .hljs-comment {
     color: var(--hljs-comment);
     font-style: italic;
