@@ -253,3 +253,144 @@ impl Drop for LibraryWrapper {
     }
 }
 ```
+
+Lastly, let's try to make this infrastructure easy to use.
+
+## 3. Simplifying usage
+
+As you can see right now we need to do a lot of things to hotreload functions. Initialize library, spawn watcher, manually load required functions before calling them, etc... However, all these steps can be replaced with a single macros attribute:
+
+```rust
+// what we are aiming for
+#[hotreload]
+fn foo() {}
+```
+
+First let's optimize library initialization and spawn watcher. We can put in `LazyLock` in static variable and let library initialize itself when we'll need a function from it:
+
+```rust
+static DYNAMIC_LIBRARY: LazyLock<Arc<ArcSwap<LibraryWrapper>>> =
+    LazyLock::new(initialize_dynamic_library);
+
+fn initialize_dynamic_library() -> Arc<ArcSwap<LibraryWrapper>> {
+    let library_file_name = "your_library_name.so";
+    let library_source_path = std::env::current_exe()
+        .unwrap()
+        .parent()
+        .unwrap()
+        .join(library_file_name);
+    let shared_library_wrapper = Arc::new(ArcSwap::from_pointee(LibraryWrapper::new(
+        library_source_path.clone(),
+    )));
+
+    spawn_library_watcher(
+        library_source_path,
+        shared_library_wrapper.clone(),
+    );
+    return shared_library_wrapper;
+}
+
+// usage
+let f = (*DYNAMIC_LIBRARY).get_fn<fn() -> i32>(b"my_function");
+f();
+```
+
+Next, let's replace this:
+```rust
+#[unsafe(export_name = "my_function")]
+fn my_function() {}
+
+let f = (*DYNAMIC_LIBRARY).get_fn<fn() -> i32>(b"my_function");
+f();
+```
+with this:
+```rust
+#[hotreload]    // procedural macros
+fn my_function() {}
+
+my_function();
+```
+So that we can call our hotreloadable functions without changing their callsites. To do it we need to enable both static and dynamic linking of our library crate, this can be done by using both `rlib` and `dylib` crate types in `Cargo.toml`:
+```toml
+[lib]
+crate-type = ["rlib", "dylib"]
+```
+This will force Rust compiler to generate both `my_library.rlib` and `my_library.so` files. `.rlib` file contains object code (`.o`) and is used for static linking by LLVM and GCC byte-code compilers.
+
+Then we need to modify source function with our macros so that it will load dynamic library when called statically and execute actual function instructions when called through dynamic library. We have two ways to do it using our `#[hotreload]` macro:
+1. Generate two versions of our function: one will bear same name and be entrypoint for static calls that loads dynamic library, second will have actual function body and export name so that it can be loaded from dynamic library. This approach turns this:
+   ```rust
+   #[hotreload]
+   fn my_function(v: i32) -> i32 { v + 1 }
+   ```
+   into this:
+   ```rust
+   // entrypoint for static calls
+   fn my_function(v: i32) -> i32 {
+       let f = (*DYNAMIC_LIBRARY).get_fn<fn(i32) -> i32>(b"__hotreload_my_function");
+       f(v)
+   }
+   
+   // actual implementation reachable only through dynamic library
+   #[unsafe(export_name = "__hotreload_my_function")]
+   fn __hotreload_my_function(v: i32) -> i32 { v + 1 }
+   ```
+   However, this would not work for functions inside trait implementations, because it creates new function that is not part of trait definition.
+2. Add check for whether we're currently in statically or dynamically linked function inside each hotreloadable function. If we're inside statically linked function, then we need to load dynamic library and call it. If we're inside dynamically linked function, then we just execute actual functions instructions. This approach turns this:
+   ```rust
+   #[hotreload]
+   fn my_function(v: i32) -> i32 { v + 1 }
+   ```
+   into this:
+   ```rust
+   #[unsafe(export_name = "__hotreload_my_function")]
+   fn my_function(v: i32) -> i32 {
+       if is_outside_dynamic_library() {
+           let f = (*DYNAMIC_LIBRARY).get_fn<fn(i32) -> i32>(b"__hotreload_my_function");
+           return f(v);
+       }
+       // source function's body
+       v + 1
+   }
+   ```
+   This approach can be used in any function because it does not change it's signature or creates new syntax items - it only modifies function's body. This allows it to be used even inside trait implementations, contrary to first approach:
+   ```rust
+   impl Trait for Struct {
+       #[hotreload]
+       fn work(&self) { self.do_something(); }
+   }
+   ```
+
+Initially I used first approach in `hotcode`, but I was unsatisfied with the fact that this macros can't be used anywhere, so I came up with second option, that we will use today.
+
+### Checking whether we are inside dynamic library
+
+This check is the core component for our system. To perform it we need to ask OS information about current function's address space and map it to executable module name. If it matches `std::env::current_exe()`, then it means that we are inside statically linked function, otherwise - in dynamic library. Platform-agnostic pseudocode for this check looks something like this:
+```rust
+fn is_outside_dynamic_library() -> bool {
+    let current_fn_ptr = is_outside_dynamic_library as *const _;
+    let current_module_name = os::get_module_name_from_ptr(current_fn_ptr);
+    return current_module_name != std::env::current_exe();
+}
+```
+Notice that we do not need to pass pointer to function that we're trying to hotreload - the `is_outside_dynamic_library`'s pointer is enough to determine whether current module name, because it will also exist in two variants - as a staticaly and dynamically linked function.
+
+On Linux `get_module_name_from_ptr` uses `dladdr` OS function, on Windows - `GetModuleHandleExW` and `GetModuleFileNameW` OS functions. As most of syscalls these functions can be slow, and performing this check for each hotreloadable function call can be inexcussable on hotpaths. Fortunately, result of this function can also be cached! We can define static lazy bool variable and cache check result in it:
+```rust
+fn is_outside_dynamic_library() -> bool {
+    *IS_OUTSIDE_DYNAMIC_LIBRARY
+}
+
+static IS_OUTSIDE_DYNAMIC_LIBRARY: LazyLock<bool> =
+    LazyLock::new(slow_is_outside_dynamic_library);
+
+fn slow_is_outside_dynamic_library() -> bool {
+    let current_fn_ptr = is_outside_dynamic_library as *const _;
+    let current_module_name = os::get_module_name_from_ptr(current_fn_ptr);
+    return current_module_name != std::env::current_exe();
+}
+```
+
+This works because each dynamic library has it's own set of static variables. This means that in our host process that calls hotreloadable functions the `IS_OUTSIDE_DYNAMIC_LIBRARY` will cache to `false`, and in dynamic libraries that we load it will cache to `true`. We can safely cache it once and never rerun this check afterwards because function can not move inside process memory. This way overhead for calling hotreloadable functions becomes neglegible.
+
+### Coupling all together
