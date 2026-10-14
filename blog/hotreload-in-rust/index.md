@@ -148,16 +148,14 @@ impl LibraryWrapper {
             if let Some(existing) = self.symbol_ptrs_map.read().unwrap().get(symbol_name) {
                 existing
             } else {
+                let mut write = self.symbol_ptrs_map.write().unwrap();
                 let raw_fn_ptr = self
                     .inner
                     .get::<fn()>(symbol_name)
                     .unwrap()
                     .try_as_raw_ptr()
                     .unwrap();
-                self.symbol_ptrs_map
-                    .write()
-                    .unwrap()
-                    .insert(symbol_name, raw_fn_ptr);
+                write.insert(symbol_name, raw_fn_ptr);
                 raw_fn_ptr
             };
         let f = core::mem::transmute_copy(&fn_ptr.cast::<()>());
@@ -278,7 +276,7 @@ We can put dynamic library `LazyLock` in static variable and let library initial
 static DYNAMIC_LIBRARY: LazyLock<Arc<ArcSwap<LibraryWrapper>>> =
     LazyLock::new(initialize_dynamic_library);
 
-fn initialize_dynamic_library() -> Arc<ArcSwap<LibraryWrapper>> {
+fn initialize_dynamic_library() -> Arc<LibraryWrapper> {
     let library_file_name = "your_library_name.so";
     let library_source_path = std::env::current_exe()
         .unwrap()
@@ -293,7 +291,7 @@ fn initialize_dynamic_library() -> Arc<ArcSwap<LibraryWrapper>> {
         library_source_path,
         shared_library_wrapper.clone(),
     );
-    return shared_library_wrapper;
+    return shared_library_wrapper.load_full();
 }
 
 // usage
@@ -399,6 +397,42 @@ fn slow_is_outside_dynamic_library() -> bool {
 
 This works because each dynamic library has it's own set of static variables. This means that in our host process that calls hotreloadable functions the `IS_OUTSIDE_DYNAMIC_LIBRARY` will cache to `false`, and in dynamic libraries that we load it will cache to `true`. We can safely cache it once and never rerun this check afterwards because function can not move inside process memory. This way overhead for calling hotreloadable functions becomes neglegible.
 
+### Supporting multiple libraries
+
+There is one more little improvement that we can do. Suppose that your binary uses multiple of your libraries whose functions you want to hotreload. Current implementation will panic on `unwrap` of `libloading::Library::get` result when you try to load function from second library after first library has already initialized static `DYNAMIC_LIBRARY` variable. This can be easily solved by storing `RwLock<HashMap<String, Arc<ArcSwap<LibraryWrapper>>>>` in `DYNAMIC_LIBRARY` - a cache that maps library to it's `LibraryWrapper`:
+
+```rust
+pub static DYNAMIC_LIBRARIES_MAP: LazyLock<RwLock<HashMap<String, Arc<ArcSwap<LibraryWrapper>>>>> =
+    LazyLock::new(Default::default);
+
+// new function for provision of library wrappers for concrete crate
+pub fn provide_library_wrapper(library_file_name: String) -> Arc<LibraryWrapper> {
+    let library = if let Some(existing) = DYNAMIC_LIBRARIES_MAP.read().unwrap().get(&library_file_name) {
+        existing
+    } else {
+        let mut write = DYNAMIC_LIBRARIES_MAP.write().unwrap();
+        let library_source_path = std::env::current_exe()
+            .unwrap()
+            .parent()
+            .unwrap()
+            .join(library_file_name);
+        let shared_library_wrapper = Arc::new(ArcSwap::from_pointee(LibraryWrapper::new(
+            library_source_path.clone(),
+        )));
+        library_watcher::spawn(
+            library_file_name.to_owned(),   // <- also pass actual library name to watcher,
+            library_source_path,            //    because we will need one watcher for
+            shared_library_wrapper.clone(), //    each hotreloadable dynamic library
+        );
+        write.insert(library_file_name, shared_library_wrapper);
+        shared_library_wrapper
+    }
+    return library.load_full();
+}
+```
+
+We can also extract name of a crate in which our `#[hotreload]` macros is being called using `CARGO_PKG_NAME` environment variable like this: `std::env::var("CARGO_PKG_NAME").unwrap()` and pass it instead of previously hardcoded `"your_library_name.so"`.
+
 ### Result
 
 Now all we have to do to make a function hotreloadable is to apply `#[hotreload]` attribute. That's it!
@@ -419,15 +453,6 @@ impl Trait for Struct {
 ```
 
 Regarding performance, in the worst case we'll have to do two relatively-slow initializations: loading library from disk, calling OS function to check if we're inside dynamic library, and search for required function in loaded dynamic library. In the best case we load values from two `LazyLock`s and extract existing entry from `HashMap`.
-
-### Supporting multiple libraries
-
-TODO
-we need to change `LazyLock<Arc<ArcSwap<LibraryWrapper>>>` to `LazyLock<HashMap<String, Arc<ArcSwap<LibraryWrapper>>>>`
-```rust
-static DYNAMIC_LIBRARY: LazyLock<Arc<ArcSwap<LibraryWrapper>>> =
-    LazyLock::new(initialize_dynamic_library);
-```
 
 ## Conclusion
 
