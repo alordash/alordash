@@ -2,9 +2,9 @@
 
 Hotreloading lets you change the code of a running application. This removes the need to restart the program after every change. It also keeps the state of a program in-tact, so you don’t need to go through the chores of things like connecting to DB, openning and editing test file, or arranging dummies for a car crash simulation in your physics engine again.
 
-Today I'd like to tell you how to painlessly hotreload Rust code and how I've done it in my [`hotcode`](https://crates.io/crates/hotcode) crate. We will need to use dynamic libraries for this.
+Today I'd like to tell you how to effortlessly hotreload Rust code and how I've done it in my [`hotcode`](https://crates.io/crates/hotcode) crate using dynamic libraries.
 
-## A Dynamic Library
+## Dynamic Library
 
 > _This section contains short description of what a dynamic library is and how it works. If you already know it you can skip this part._
 
@@ -60,9 +60,35 @@ let second_result = func(); // use changed function
 assert_ne!(first_result, second_result);
 ```
 
-Loading and usage of dynamic library must be performed in a [binary](https://doc.rust-lang.org/cargo/reference/cargo-targets.html#binaries) or separate executable crate. `my_function` should be placed in a `dylib` crate because we will load our Rust library only from Rust, so there is no need to use `cdylib`.
+This is basically the whole idea. But there are some limitations:
 
-This is basically the whole idea. Now we will focus on its details: 1. how to store dynamic library, 2. how to wait for dynamic library to update and 3. how to make it convenient to use.
+1. Loading and usage of dynamic library must be performed in a [binary](https://doc.rust-lang.org/cargo/reference/cargo-targets.html#binaries) or separate executable crate. `my_function` should be placed in a `dylib` crate because we will load our Rust library only from Rust, so there is no need to use `cdylib`.
+
+2. Another dynamic library limitation is that you can not export functions with generics through them.
+
+   <details>
+    <summary>Why generics can not be exported in dynamic libraries?</summary>
+    Because function's definition alone is not enough for compiler to generate real code, it also needs to know how exactly this function is used. For example, if we write:
+
+    ```rust
+     fn string_value<T: ToString>(t: &T) -> String {
+         t.to_string()
+     }
+
+    string_value(&1);
+    string_value("quo vadis");
+    ```
+
+    the compiler will generate two implementations of `string_value`: one for `i32` and one for `&str` because it uses static linking and knows all usage scenarios of `string_value`. When we build library for dynamic linking we can not know beforehand how our exported function will be used. One way to circumvent that is to use trait objects and dynamic dispatch:
+
+    ```rust
+    fn string_value(t: &dyn ToString) -> String {
+       t.to_string();
+    }
+    ```
+   </details>
+
+Next we will focus on implementation details, specifically: 1. how to store dynamic library, 2. how to wait for dynamic library to update and 3. how to make it convenient to use.
 
 ## 1. Dynamic library storage
 
@@ -147,30 +173,6 @@ f();
 ```
 
 Now we can store dynamic library in a convenient `LibraryWrapper` structure that ensures library's lifetime and offers fast functions search.
-
-> <details>
->  <summary>Why generics can not be used in dynamic libraries?</summary>
->
-> Because function's definition alone is not enough for compiler to generate real code, it also needs to know how exactly this function is used. For example, if we write:
->
-> ```rust
->  fn string_value<T: ToString>(t: &T) -> String {
->      t.to_string()
->  }
->
-> string_value(&1);
-> string_value("quo vadis");
-> ```
->
-> the compiler will generate two implementations of `string_value`: one for `i32` and one for `&str` because it uses static linking and knows all usage scenarios of `string_value`. When we build library for dynamic linking we can not know beforehand how our exported function will be used. One way to circumvent that is to use trait objects and dynamic dispatch:
->
-> ```rust
-> fn string_value(t: &dyn ToString) -> String {
->    t.to_string();
-> }
-> ```
->
-> </details>
 
 ## 2. Dynamic library update
 
@@ -266,7 +268,11 @@ As you can see right now we need to do a lot of things to hotreload functions. I
 fn foo() {}
 ```
 
-First let's optimize library initialization and spawn watcher. We can put in `LazyLock` in static variable and let library initialize itself when we'll need a function from it:
+First let's optimize library initialization and spawn watcher.
+
+### Lazy dynamic library initialization
+
+We can put dynamic library `LazyLock` in static variable and let library initialize itself the first time we need to call a function from it:
 
 ```rust
 static DYNAMIC_LIBRARY: LazyLock<Arc<ArcSwap<LibraryWrapper>>> =
@@ -393,4 +399,39 @@ fn slow_is_outside_dynamic_library() -> bool {
 
 This works because each dynamic library has it's own set of static variables. This means that in our host process that calls hotreloadable functions the `IS_OUTSIDE_DYNAMIC_LIBRARY` will cache to `false`, and in dynamic libraries that we load it will cache to `true`. We can safely cache it once and never rerun this check afterwards because function can not move inside process memory. This way overhead for calling hotreloadable functions becomes neglegible.
 
-### Coupling all together
+### Result
+
+Now all we have to do to make a function hotreloadable is to apply `#[hotreload]` attribute. That's it!
+```rust
+#[hotreload]
+fn my_function() {}
+
+impl Struct {
+    fn my_function(&self) {}
+    fn my_static_function() {}
+}
+
+impl Trait for Struct {
+    fn my_function(&self) {}
+    fn my_static_function() {}
+}
+// and any other function that you may find
+```
+
+Regarding performance, in the worst case we'll have to do two relatively-slow initializations: loading library from disk, calling OS function to check if we're inside dynamic library, and search for required function in loaded dynamic library. In the best case we load values from two `LazyLock`s and extract existing entry from `HashMap`.
+
+### Supporting multiple libraries
+
+TODO
+we need to change `LazyLock<Arc<ArcSwap<LibraryWrapper>>>` to `LazyLock<HashMap<String, Arc<ArcSwap<LibraryWrapper>>>>`
+```rust
+static DYNAMIC_LIBRARY: LazyLock<Arc<ArcSwap<LibraryWrapper>>> =
+    LazyLock::new(initialize_dynamic_library);
+```
+
+## Conclusion
+
+TODO
+1. single-attribute solution
+2. cunning caching
+3. cunning dynamic library lifetime management

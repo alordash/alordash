@@ -25,3 +25,6 @@
 
 !blog/hot-reload-in-rust/
 !blog/hot-reload-in-rust/**
+
+!scripts/
+!scripts/build-posts.ts
