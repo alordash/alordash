@@ -33,10 +33,10 @@ body {
     display: flex;
     flex-direction: column;
     min-height: calc(100vh - 80px);
-    max-width: 800px;
+    max-width: 900px;
     margin: 40px auto;
     padding: 0 20px;
-    font: 18px/1.6 system-ui, sans-serif;
+    font: 17px/1.6 system-ui, sans-serif;
     color: var(--fg);
     background: var(--bg);
 }
