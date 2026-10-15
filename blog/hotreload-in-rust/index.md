@@ -1,21 +1,21 @@
 # Hotreload in Rust
 
-Hotreloading lets you change the code of a running application. This removes the need to restart the program after every change. It also keeps the state of a program in-tact, so you don’t need to go through the chores of things like connecting to DB, openning and editing test file, or arranging dummies for a car crash simulation in your physics engine again.
+Hotreloading lets you change the code of a running application. This removes the need to restart the program after every change. It also keeps the state of a program intact, so you don’t need to go through chores like connecting to DB, opening and editing test files, or arranging dummies for a car crash simulation in your physics engine again.
 
 Today I'd like to tell you how to effortlessly hotreload Rust code and how I've done it in my [`hotcode`](https://crates.io/crates/hotcode) crate using dynamic libraries.
 
 ## Dynamic Library
 
-> _This section contains short description of what a dynamic library is and how it works. If you already know it you can skip this part._
+> _This section briefly describes what a dynamic library is and how it works. If you already know it you can skip this part._
 
-Dynamic library is a collection of precompiled code represented by a file on disk. It's code can be loaded at run-time by your application using special OS functions. You give the path to dynamic library file to OS and it loads it into your process' memory, returning you a handle to OS object. Then you search for your function in dynamic library using its symbol. Symbol is just a unique name represented by a string of bytes. Rust allows you to set it explicitly using [`export_name`](https://doc.rust-lang.org/reference/abi.html#the-export_name-attribute) attribute:
+A dynamic library is a collection of precompiled code represented by a file on disk. Its code can be loaded at run-time by your application using special OS functions. You give the path to a dynamic library file to the OS and it loads it into your process's memory, returning a handle to an OS object. Then you search for your function in the dynamic library using its symbol. A symbol is just a unique name represented by a string of bytes. Rust allows you to set it explicitly using the [`export_name`](https://doc.rust-lang.org/reference/abi.html#the-export_name-attribute) attribute:
 
 ```rust
 #[unsafe(export_name = "my_function_symbol")]
 pub fn my_function() {}
 ```
 
-To load dynamic library in Rust there is a [`libloading`](https://crates.io/crates/libloading) crate that allows you to do it fairly easy:
+To load a dynamic library in Rust, there is a [`libloading`](https://crates.io/crates/libloading) crate that allows you to do it fairly easily:
 
 ```rust
 use libloading::*;
@@ -25,7 +25,7 @@ let func: Symbol<unsafe extern "C" fn() -> u32> = lib.get(b"my_function").unwrap
 unsafe { func() }; // function loaded from dynamic library
 ```
 
-To make your crate produce dynamic library instead of a object library you need to set crate type in `Cargo.toml` to either `dylib` or `cdylib`.:
+To make your crate produce a dynamic library instead of an object library you need to set the crate type in `Cargo.toml` to either `dylib` or `cdylib`:
 
 ```toml
 [lib]
@@ -34,11 +34,11 @@ crate-type = ["dylib"]
 crate-type = ["cdylib"]
 ```
 
-`dylib` is intended to be used by other Rust crates and uses unstable (as of now) Rust ABI. `cdylib` is intended to be used by foreign languages. It produces libraries with smaller size because it strips Rust's metadata. For information about various crate types read about [Linkage](https://doc.rust-lang.org/reference/linkage.html) in the Rust reference.
+`dylib` is intended to be used by other Rust crates and uses unstable (as of now) Rust ABI. `cdylib` is intended to be used by foreign languages. It produces smaller libraries because it strips Rust's metadata. For information about various crate types, you can read about [Linkage](https://doc.rust-lang.org/reference/linkage.html) in the Rust reference.
 
 ## Reloading code with dynamic library
 
-One of simplest ways of achieving hotreloading in Rust is to use dynamic libraries to update functions code. The idea is simple - instead of calling a statically linked function we load dynamic library and call a function from there instead. Then, after we change our code, we unload previously loaded library and reload updated version. It looks roughly something like that:
+One of the simplest ways of achieving hotreloading in Rust is to use dynamic libraries to update function's code. The idea is simple - instead of calling a statically linked function we load a dynamic library and call a function from there. Then, after we change our code, we unload the previously loaded library and reload the updated version. It looks roughly like this:
 
 ```rust
 let path = "path/to/dynamic/library";
@@ -62,24 +62,24 @@ assert_ne!(first_result, second_result);
 
 This is basically the whole idea. But there are some limitations:
 
-1. Loading and usage of dynamic library must be performed in a [binary](https://doc.rust-lang.org/cargo/reference/cargo-targets.html#binaries) or separate executable crate. `my_function` should be placed in a `dylib` crate because we will load our Rust library only from Rust, so there is no need to use `cdylib`.
+1. Loading and usage of a dynamic library must be performed in a [binary](https://doc.rust-lang.org/cargo/reference/cargo-targets.html#binaries) or separate executable crate. `my_function` should be placed in a `dylib` crate because we will load our Rust library only from Rust, so there is no need to use `cdylib`.
 
 2. Another dynamic library limitation is that you can not export functions with generics through them.
 
   <details>
     <summary>Why generics can not be exported in dynamic libraries?</summary>
-    Because function's definition alone is not enough for compiler to generate real code, it also needs to know how exactly this function is used. For example, if we write:
+    Because a function's definition alone is not enough for the compiler to generate real code, it also needs to know exactly how this function is used. For example, if we write:
 
     ```rust
-     fn string_value<T: ToString>(t: &T) -> String {
-         t.to_string()
-     }
+    fn string_value<T: ToString>(t: &T) -> String {
+        t.to_string()
+    }
 
     string_value(&1);
     string_value("quo vadis");
     ```
 
-    the compiler will generate two implementations of `string_value`: one for `i32` and one for `&str` because it uses static linking and knows all usage scenarios of `string_value`. When we build library for dynamic linking we can not know beforehand how our exported function will be used. One way to circumvent that is to use trait objects and dynamic dispatch:
+    the compiler will generate two implementations of `string_value`: one for `i32` and one for `&str` because it uses static linking and knows all usage scenarios of `string_value`. When we build a library for dynamic linking we can not know beforehand how our exported function will be used. One way to circumvent that is to use trait objects and dynamic dispatch:
 
     ```rust
     pub fn string_value(t: &dyn ToString) -> String {
@@ -95,15 +95,15 @@ This is basically the whole idea. But there are some limitations:
     ```
   </details>
 
-Next we will focus on implementation details, specifically: 1. how to store dynamic library, 2. how to wait for dynamic library to update and 3. how to make it convenient to use.
+Next we will focus on implementation details: 1. how to store a dynamic library, 2. how to wait for a dynamic library to update, and 3. how to make it convenient to use.
 
 ## 1. Dynamic library storage
 
-Dynamic library is represented in code as a `libloading::Library` struct - wrapper over handle to OS object. This handle must be kept alive while there are functions whose instructions are currently being read and executed in any thread. If you unload dynamic library while its function is in work you will get undefined behavior.
+A dynamic library is represented in code as a `libloading::Library` struct - a wrapper over a handle to an OS object. This handle must be kept alive while there are functions whose instructions are currently being read and executed in any thread. If you unload a dynamic library while its function is running you will get undefined behavior.
 
 ### Protection against in-use unload
 
-To protect us from accidentally unloading dynamic library that is still in use we can store it in reference counted pointer and create function wrapper that keeps it. We will use `Arc` because dynamic libraries can be safely used from any thread:
+To protect us from accidentally unloading a dynamic library that is still in use we can store it in a reference-counted pointer and create a function wrapper that keeps it. We will use `Arc` because dynamic libraries can be safely used from any thread:
 
 ```rust
 struct FnGuard<F> {
@@ -118,7 +118,7 @@ unsafe fn get_fn<F>(lib: Arc<libloading::Library>, fn_name: &[u8]) -> FnGuard<F>
     return result;
 }
 
-// for ability call it like this:
+// for ability to call it like this:
 // let fn_guard = get_fn(...);
 // fn_guard();
 impl<F> Deref for FnGuard<F> {
@@ -135,18 +135,18 @@ let f = lib.get_fn<fn() -> i32>(b"my_function_symbol");
 f();
 ```
 
-Now when we call function loaded from dynamic library (that we get through `get_fn`) the guard will guarantee that there will be at least one reference to dynamic library until the function finishes execution. We no longer have to worry that library could be accidentally unloaded while it is still in use.
+Now when we call a function loaded from a dynamic library (that we get through `get_fn`) the guard will guarantee that there will be at least one reference to the dynamic library until the function finishes execution. We no longer have to worry that the library could be accidentally unloaded while it is still in use.
 
 Next, let's try to make `get_fn` faster.
 
-### Speeding-up functions search
+### Faster up function search
 
-Symbol look-up can be relatively costly operation. Fortunately, its result can be cached because symbols in a dynamic library can not move. The first time we obtain their pointer, we can cache it in a symbol name map. We can create wrapper over `libloading::Library` that holds inner library, exposes `get_fn` method and keeps a cache of symbols pointers:
+Symbol lookup can be a relatively costly operation. Fortunately, its result can be cached because symbols in a dynamic library can not move. The first time we obtain a pointer to one of them, we can cache it in a symbol name map. We can create a wrapper over `libloading::Library` that holds the inner library, exposes the `get_fn` method and keeps a cache of symbol pointers:
 
 ```rust
 struct LibraryWrapper {
     inner: libloading::Library,
-    symbols_map: RwLock<HashMap<&'static [u8], *mut core::ffi::c_void>>
+    symbols_map: RwLock<HashMap<&'static [u8], *mut core::ffi::c_void>>,
 }
 
 pub unsafe fn get_fn<F>(lib: Arc<RwLock<Self>>, symbol_name: &'static [u8]) -> FnGuard<F> {
@@ -175,11 +175,11 @@ let f = lib.get_fn<fn() -> i32>(b"my_function_symbol");
 f();
 ```
 
-Now we can store dynamic library in a convenient `LibraryWrapper` structure that ensures library's lifetime and offers fast functions search.
+Now we can store a dynamic library in a convenient `LibraryWrapper` structure that ensures library's lifetime and offers fast function search.
 
 ## 2. Dynamic library update
 
-We want our application to automatically reload dynamic library whenever we rebuild our library. To do it we need to watch for changes of our compiled dynamic library file. This can be done using [`notify`](https://crates.io/crates/notify) crate - it provides cross-platform file system watchers. Watcher lives in a separate thread and performs callback whenever target file receives specified changes: creation, deletion, modification and so on. Here's basic usage example:
+We want our application to automatically reload a dynamic library whenever we rebuild our library. To do it we need to watch for changes of our compiled dynamic library file. This can be done using the [`notify`](https://crates.io/crates/notify) crate - it provides cross-platform file system watchers. A watcher lives in a separate thread and performs a callback whenever the target file receives specified changes: creation, deletion, modification and so on. Here's a basic usage example:
 
 ```rust
 let mut watcher = notify::recommended_watcher(|res: Result<notify::Event, notify::Error>| {
@@ -195,18 +195,18 @@ let mut watcher = notify::recommended_watcher(|res: Result<notify::Event, notify
 watcher.watch("path/to/file/or/directory".as_ref(), RecursiveMode::Recursive).unwrap();
 ```
 
-The closure we passed will be called each time target file or any file in target directory is changed. Note that you may need to use debounced version: [`notify-debouncer-full`](https://crates.io/crates/notify-debouncer-full) because cargo may write file multiple times, but for the sake of simplicity we will use regular version. We can run it to watch our dynamic library file and path `Arc` to closure, but we won't be able to reload our library because `Arc` does not allow mutating its contents.
+The closure we passed will be called each time the target file or any file in the target directory is changed. Note that you may need to use the debounced version: [`notify-debouncer-full`](https://crates.io/crates/notify-debouncer-full) because Cargo may write the file multiple times, but for the sake of simplicity we will use the regular version. We can run it to watch our dynamic library file and pass an `Arc` to the closure, but we won't be able to reload our library because `Arc` does not allow mutating its contents.
 
-Naive approach to solve it would be to store `Mutex` in `Arc` for ability to lock, unload and reload our library in watcher's callback.  
-A better approach would be to use `RwLock`, since we mostly read from dynamic library - this happens each time we try to extract pointer to function from it using `get_fn` - and rarely write to it - only when we rebuild it.  
-An even better approach would be to use `ArcSwap` struct from [`arc-swap`](https://crates.io/crates/arc-swap) crate. It stores an `Arc` that it can atomically change. It allows us to reload dynamic library without blocking at all!
+A naive approach to solve it would be to store a `Mutex` in an `Arc` to be able to lock, unload and reload our library in the watcher's callback.  
+A better approach would be to use `RwLock`, since we mostly read from the dynamic library - this happens each time we try to extract a pointer to a function from it using `get_fn` - and rarely write to it - only when we rebuild it.  
+An even better approach would be to use the `ArcSwap` struct from the [`arc-swap`](https://crates.io/crates/arc-swap) crate. It stores an `Arc` that it can atomically change. It allows us to reload a dynamic library without blocking at all!
 
-Suppose we've called function `foo` from dynamic library. Then, while it's still executing, we receive notification from watcher that dynamic library has changed. We load new version library without unloading previous one because it is still in use by first call of `foo`. We store new version of dynamic library in our `ArcSwap` and any subsequent calls of `foo` will now use new version of this function. `Arc` to previous version of library was removed from `ArcSwap`, so it's no longer possible to call any function from previous library, but it will be still present in memory as long as first `foo` call is still running. The moment it is done, it's `FnGuard` will drop last `Arc` to previous library and it will automatically unload.
+It works like this: suppose we've called the function `foo` from a dynamic library. Then, while it's still executing, we receive a notification from the watcher that the dynamic library has changed. We load the new version of the library without unloading the previous one because it is still in use by the first call of `foo`. We store the new version of the dynamic library in our `ArcSwap` and any subsequent calls to `foo` will now use the new version of this function. The `Arc` to the previous version of the library was removed from `ArcSwap`, so it's no longer possible to call any function from the previous library, but it will still be present in memory as long as the first `foo` call is still running. The moment it is done, its `FnGuard` will drop the last `Arc` to the previous library and it will automatically unload.
 
-Together with file watcher our code will look like this:
+Together with the file watcher, our code will look like this:
 
 ```rust
-// main - one time set up
+// main - one-time setup
 let path = "path/to/dynamic/library";
 let lib = Arc::new(ArcSwap::from_pointee(LibraryWrapper::new(path)));
 
@@ -227,14 +227,15 @@ let func = lib
 let result = func();
 ```
 
-There is one last important thing that we must do - copy dynamic library file to some temp file so that `LibraryWrapper` instance won't hold lock on compileable file and block rebuilding. This can be easily tweaked in `LibraryWrapper`:
+There is one last important thing that we must do - copy a dynamic library file to some temp file so that the `LibraryWrapper` instance won't hold a lock on the compilable file and block rebuilding. This can be easily tweaked in `LibraryWrapper::new`:
 
 ```rust
 struct LibraryWrapper {
     inner: libloading::Library,
     symbols_map: RwLock<HashMap<&'static [u8], *mut core::ffi::c_void>>,
-    lib_path: PathBuf   // adding this field to remember where library was loaded
-                        // from (`libloading::Library` does not store it)
+    lib_path: PathBuf   // adding this field to remember where library
+                        // was loaded from (`libloading::Library`
+                        // does not store path to its library file)
 }
 
 impl LibraryWrapper {
@@ -264,7 +265,7 @@ Lastly, let's try to make this infrastructure easy to use.
 
 ## 3. Simplifying usage
 
-As you can see right now we need to do a lot of things to hotreload functions. Initialize library, spawn watcher, manually load required functions before calling them, etc... However, all these steps can be replaced with a single macros attribute:
+As you can see, right now we need to do a lot of things to hotreload functions: initialize the library, spawn the watcher, manually load required functions before calling them, etc. However, all these steps can be replaced with a single macro attribute:
 
 ```rust
 // what we are aiming for
@@ -272,11 +273,11 @@ As you can see right now we need to do a lot of things to hotreload functions. I
 fn foo() {}
 ```
 
-First let's optimize library initialization and spawn watcher.
+First, let's optimize library initialization and spawn the watcher.
 
 ### Lazy dynamic library initialization
 
-We can put dynamic library `LazyLock` in static variable and let library initialize itself the first time we need to call a function from it:
+We can put the dynamic library behind a `LazyLock` in a static variable and let the library initialize itself the first time we need to call a function from it:
 
 ```rust
 static DYNAMIC_LIBRARY: LazyLock<Arc<ArcSwap<LibraryWrapper>>> =
@@ -315,20 +316,20 @@ f();
 ```
 with this:
 ```rust
-#[hotreload]    // procedural macros
+#[hotreload]    // procedural macro
 fn my_function() {}
 
 my_function();
 ```
-So that we can call our hotreloadable functions without changing their callsites. To do it we need to enable both static and dynamic linking of our library crate, this can be done by using both `rlib` and `dylib` crate types in `Cargo.toml`:
+This way we can call our hotreloadable functions without changing their call sites. To do it we need to enable both static and dynamic linking of our library crate; this can be done by using both `rlib` and `dylib` crate types in `Cargo.toml`:
 ```toml
 [lib]
 crate-type = ["rlib", "dylib"]
 ```
-This will force Rust compiler to generate both `my_library.rlib` and `my_library.so` files. `.rlib` file contains object code (`.o`) and Rust metadata. It is needed for static linking of library so that we can call it's functions directly in our executable's code.
+This will force the Rust compiler to generate both `my_library.rlib` and `my_library.so` files. The `.rlib` file contains object code (`.o`) and Rust metadata. It is needed for static linking of the library so that we can call its functions directly in our executable's code.
 
-Then we need to modify source function with our macros so that it will load dynamic library when called statically and execute actual function instructions when called through dynamic library. We have two ways to do it using our `#[hotreload]` macro:
-1. Generate two versions of our function: one will bear same name and be entrypoint for static calls that loads dynamic library, second will have actual function body and export name so that it can be loaded from dynamic library. This approach turns this:
+Then we need to modify the source function with our macro so that it will load the dynamic library when called statically and execute actual function instructions when called through the dynamic library. We have two ways to do it using our `#[hotreload]` macro:
+1. Generate two versions of our function: one will bear the same name and be an entrypoint for static calls that loads the dynamic library; second will have the actual function body and export name so that it can be loaded from the dynamic library. This approach turns this:
    ```rust
    #[hotreload]
    fn my_function(v: i32) -> i32 { v + 1 }
@@ -345,8 +346,8 @@ Then we need to modify source function with our macros so that it will load dyna
    #[unsafe(export_name = "__hotreload_my_function")]
    fn __hotreload_my_function(v: i32) -> i32 { v + 1 }
    ```
-   However, this would not work for functions inside trait implementations, because it creates new function that is not part of trait definition.
-2. Add check for whether we're currently in statically or dynamically linked function inside each hotreloadable function. If we're inside statically linked function, then we need to load dynamic library and call it. If we're inside dynamically linked function, then we just execute actual functions instructions. This approach turns this:
+   However, this would not work for functions inside trait implementations, because it creates a new function that is not part of the trait definition.
+2. Add a check for whether we're currently in a statically or dynamically linked function inside each hotreloadable function. If we're inside a statically linked function, then we need to load the dynamic library and call it. If we're inside a dynamically linked function, then we just execute actual function's instructions. This approach turns this:
    ```rust
    #[hotreload]
    fn my_function(v: i32) -> i32 { v + 1 }
@@ -363,7 +364,7 @@ Then we need to modify source function with our macros so that it will load dyna
        v + 1
    }
    ```
-   This approach can be used in any function because it does not change it's signature or creates new syntax items - it only modifies function's body. This allows it to be used even inside trait implementations, contrary to first approach:
+   This approach can be used in any function because it does not change its signature or create new syntax items - it only modifies the function's body. This allows it to be used even inside trait implementations, contrary to the first approach:
    ```rust
    impl Trait for Struct {
        #[hotreload]
@@ -371,11 +372,11 @@ Then we need to modify source function with our macros so that it will load dyna
    }
    ```
 
-Initially I used first approach in `hotcode`, but I was unsatisfied with the fact that this macros can't be used anywhere, so I came up with second option, that we will use today.
+Initially I used the first approach in `hotcode`, but I was unsatisfied with the fact that this macro can't be used anywhere, so I came up with the second option that we will use.
 
 ### Checking whether we are inside dynamic library
 
-This check is the core component for our system. To perform it we need to ask OS information about current function's address space and map it to executable module name. If it matches `std::env::current_exe()`, then it means that we are inside statically linked function, otherwise - in dynamic library. Platform-agnostic pseudocode for this check looks something like this:
+This check is the core component for our system. To perform it we need to ask the OS for information about current function's address space and map it to the executable module name. If it matches `std::env::current_exe()`, then it means that we are inside a statically linked function, otherwise - in the dynamic library. Platform-agnostic pseudocode for this check looks something like this:
 ```rust
 fn is_outside_dynamic_library() -> bool {
     let current_fn_ptr = is_outside_dynamic_library as *const _;
@@ -383,9 +384,9 @@ fn is_outside_dynamic_library() -> bool {
     return current_module_name != std::env::current_exe();
 }
 ```
-Notice that we do not need to pass pointer to function that we're trying to hotreload - the `is_outside_dynamic_library`'s pointer is enough to determine whether current module name, because it will also exist in two variants - as a staticaly and dynamically linked function.
+Notice that we do not need to pass the pointer to the function that we're trying to hotreload - the `is_outside_dynamic_library`'s pointer is enough to determine the current module name, because it will also exist in two variants - as a statically linked and a dynamically linked function.
 
-On Linux `get_module_name_from_ptr` uses `dladdr` libc function, on Windows - `GetModuleHandleExW` and `GetModuleFileNameW` OS functions. Performing this check for each hotreloadable function call can be inexcussable on hotpaths. Fortunately, result of this function can also be cached! We can define static lazy bool variable and cache check result in it:
+On Linux `get_module_name_from_ptr` uses the `dladdr` libc function; on Windows - `GetModuleHandleExW` and `GetModuleFileNameW` OS functions. Performing this check for each hotreloadable function call can be unacceptable on hot paths. Fortunately, the result of this function can also be cached! We can define a static lazy bool variable and cache the check result in it:
 ```rust
 fn is_outside_dynamic_library() -> bool {
     *IS_OUTSIDE_DYNAMIC_LIBRARY
@@ -401,17 +402,17 @@ fn slow_is_outside_dynamic_library() -> bool {
 }
 ```
 
-This works because each dynamic library has it's own set of static variables. This means that in our host process that calls hotreloadable functions the `IS_OUTSIDE_DYNAMIC_LIBRARY` will cache to `false`, and in dynamic libraries that we load it will cache to `true`. We can safely cache it once and never rerun this check afterwards because function can not move inside process memory. This way overhead for calling hotreloadable functions becomes neglegible.
+This works because each dynamic library has its own set of static variables. This means that in our host process that calls hotreloadable functions, the `IS_OUTSIDE_DYNAMIC_LIBRARY` will cache to `false`, and in dynamic libraries that we load it will cache to `true`. We can safely cache it once and never rerun this check afterwards because the function can not move inside process memory. This way overhead for calling hotreloadable functions becomes negligible.
 
 ### Supporting multiple libraries
 
-There is one more little improvement that we can do. Suppose that your binary uses multiple of your libraries whose functions you want to hotreload. Current implementation will panic on `unwrap` of `libloading::Library::get` result when you try to load function from second library after first library has already initialized static `DYNAMIC_LIBRARY` variable. This can be easily solved by storing `RwLock<HashMap<String, Arc<ArcSwap<LibraryWrapper>>>>` in `DYNAMIC_LIBRARY` - a cache that maps library to it's `LibraryWrapper`:
+There is one more little improvement that we can do. Suppose that your binary uses multiple of your libraries whose functions you want to hotreload. The current implementation will panic on `unwrap` of `libloading::Library::get` result when you try to load a function from the second library after the first library has already initialized the static `DYNAMIC_LIBRARY` variable. This can be easily solved by storing `RwLock<HashMap<String, Arc<ArcSwap<LibraryWrapper>>>>` in `DYNAMIC_LIBRARY` - a cache that maps a library to its `LibraryWrapper`:
 
 ```rust
 pub static DYNAMIC_LIBRARIES_MAP: LazyLock<RwLock<HashMap<String, Arc<ArcSwap<LibraryWrapper>>>>> =
     LazyLock::new(Default::default);
 
-// new function for provision of library wrappers for concrete crate
+// new function to provide library wrappers for concrete crate
 pub fn provide_library_wrapper(library_file_name: String) -> Arc<LibraryWrapper> {
     let library = if let Some(existing) = DYNAMIC_LIBRARIES_MAP.read().unwrap().get(&library_file_name) {
         existing
@@ -437,11 +438,11 @@ pub fn provide_library_wrapper(library_file_name: String) -> Arc<LibraryWrapper>
 }
 ```
 
-We can also extract name of a crate in which our `#[hotreload]` macros is being called using `CARGO_PKG_NAME` environment variable like this: `std::env::var("CARGO_PKG_NAME").unwrap()` and pass it instead of previously hardcoded `"your_library_name.so"`.
+We can also extract the name of a crate in which our `#[hotreload]` macro is being called using the `CARGO_PKG_NAME` environment variable like this: `std::env::var("CARGO_PKG_NAME").unwrap()` and pass it instead of previously hardcoded `"your_library_name.so"`.
 
 ### Result
 
-Now all we have to do to make a function hotreloadable is to apply `#[hotreload]` attribute:
+Now all we have to do to make a function hotreloadable is to apply the `#[hotreload]` attribute:
 ```rust
 #[hotreload]
 fn my_function() {}
@@ -462,14 +463,14 @@ impl Trait for Struct {
 // and any other function that you may find
 ```
 
-We also didn't sacrifice much of performance - in the worst case we'll have to do three relatively-slow initializations: loading library from disk, calling OS function to check if we're inside dynamic library, and search for required function in loaded dynamic library. In the best case we load values from two `LazyLock`s and extract existing entry from `HashMap`.
+We also didn't sacrifice much performance - in the worst case we'll have to do three relatively slow initializations: loading the library from disk, calling an OS function to check if we're inside the dynamic library, and searching for the required function in the loaded dynamic library. In the best case we load values from two `LazyLock`s and extract an existing entry from `HashMap`.
 
 ## Conclusion and acknowledgements
 
 This was a fun project to do, but this is not the first attempt at bringing hotreloading to Rust. Here are some other attempts that I found interesting:
 
-1. [`hot-lib-reloader-rs`](https://crates.io/crates/hot-lib-reloader) - this crate that also uses dynamic libraries for hotreloading, but requires a lot more configuration.
-2. [`subsecond`](https://crates.io/crates/subsecond) - solution by dioxus team that uses hotpatching and custom linker. Requires Dioxus CLI and wrapping hotreloadable code in `subsecond::call`.
-3. [`inline_tweak`](https://crates.io/crates/inline_tweak) - zero dependency solution that hotreloads literal values. Easy to use with a single macro.
+1. [`hot-lib-reloader`](https://crates.io/crates/hot-lib-reloader) - this crate also uses dynamic libraries for hotreloading, but requires a lot more configuration.
+2. [`subsecond`](https://crates.io/crates/subsecond) - solution by the Dioxus team that uses hotpatching and custom linker. Requires Dioxus CLI and wrapping hotreloadable code in `subsecond::call`.
+3. [`inline_tweak`](https://crates.io/crates/inline_tweak) - zero-dependency solution that hotreloads literal values. Easy to use with a single macro.
 
 That's it for now, hope your iteration cycles will be faster!
