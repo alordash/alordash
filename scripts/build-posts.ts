@@ -1,8 +1,40 @@
 import { marked } from "marked";
+import { markedHighlight } from "marked-highlight";
+import hljs from "highlight.js";
 import { readFileSync, writeFileSync, readdirSync, existsSync } from "fs";
 import { join } from "path";
 
 marked.setOptions({ gfm: true });
+
+marked.use(
+  markedHighlight({
+    langPrefix: "hljs language-",
+    emptyLangClass: "hljs",
+    highlight(code, language) {
+      const lang = hljs.getLanguage(language) ? language : "plaintext";
+      return hljs.highlight(code, { language: lang }).value;
+    },
+  }),
+);
+
+function slugify(html: string): string {
+  return html
+    .toLowerCase()
+    .replace(/<[^>]*>/g, "")
+    .replace(/&[^;]*;/g, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
+marked.use({
+  renderer: {
+    heading({ tokens, depth }) {
+      const text = this.parser.parseInline(tokens);
+      const id = slugify(text);
+      return `<h${depth} id="${id}"><a class="header-anchor" href="#${id}" aria-label="Link to this header">#</a>${text}</h${depth}>\n`;
+    },
+  },
+});
 
 const root = process.cwd();
 const distBlog = join(root, "dist", "blog");
@@ -14,7 +46,7 @@ function renderPostTemplate(
 ): string {
   return indexHtml
     .replace(/<title>([\s\S]*?)<\/title>/i, `<title>${title}</title>`)
-    .replaceAll('href="./', 'href="../../')
+    .replace(/(href|src)="\.\//g, '$1="../../')
     .replace(/<main>[\s\S]*?<\/main>/i, `<main>${postHtml}</main>`);
 }
 

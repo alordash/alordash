@@ -4,12 +4,18 @@
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <title>127.0.0.alordash</title>
+        <script>
+            document.documentElement.classList.toggle("dark", localStorage.getItem("theme") === "dark");
+        </script>
         <link rel="stylesheet" href="./style.css" />
     </head>
     <body>
         <header>
-            <a id="blog-link" href="./">Home</a
-            ><span class="tagline">my thoughts about software development</span>
+            <a id="blog-link" href="./">Home</a>
+            <span class="header-actions">
+                <span class="tagline">blog about software</span>
+                <button class="theme-toggle" type="button" aria-label="Switch color theme">Dark</button>
+            </span>
         </header>
 
         <main>
@@ -20,12 +26,12 @@
                     ><a href="./blog/hotreload-in-rust/">Hotreload in Rust</a>
                 </li>
             </ul>
-
-            <script type="module" src="./blog/blog.js"></script>
         </main>
 
         <footer>
-            <a href="https://github.com/alordash">GitHub</a>
+            <a href="https://github.com/alordash">my GitHub</a>
         </footer>
+
+        <script type="module" src="./blog/blog.js"></script>
     </body>
 </html>

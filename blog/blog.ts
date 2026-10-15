@@ -17,3 +17,14 @@ function setDate(time: HTMLTimeElement, date: string) {
     time.dateTime = date;
     time.textContent = new Date(date).toLocaleDateString("en", { dateStyle: "medium", timeZone: "UTC" });
 }
+
+const themeToggle = document.querySelector<HTMLButtonElement>(".theme-toggle")!;
+
+themeToggle.textContent = document.documentElement.classList.contains("dark") ? "Light" : "Dark";
+
+themeToggle.addEventListener("click", () => {
+    const dark = !document.documentElement.classList.contains("dark");
+    document.documentElement.classList.toggle("dark", dark);
+    localStorage.setItem("theme", dark ? "dark" : "light");
+    themeToggle.textContent = dark ? "Light" : "Dark";
+});
