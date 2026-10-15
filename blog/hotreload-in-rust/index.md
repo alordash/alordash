@@ -435,28 +435,35 @@ We can also extract name of a crate in which our `#[hotreload]` macros is being 
 
 ### Result
 
-Now all we have to do to make a function hotreloadable is to apply `#[hotreload]` attribute. That's it!
+Now all we have to do to make a function hotreloadable is to apply `#[hotreload]` attribute! No need to configure anything else.
 ```rust
 #[hotreload]
 fn my_function() {}
 
 impl Struct {
+    #[hotreload]
     fn my_function(&self) {}
+    #[hotreload]
     fn my_static_function() {}
 }
 
 impl Trait for Struct {
+    #[hotreload]
     fn my_function(&self) {}
+    #[hotreload]
     fn my_static_function() {}
 }
 // and any other function that you may find
 ```
 
-Regarding performance, in the worst case we'll have to do two relatively-slow initializations: loading library from disk, calling OS function to check if we're inside dynamic library, and search for required function in loaded dynamic library. In the best case we load values from two `LazyLock`s and extract existing entry from `HashMap`.
+We also didn't sacrifice much of performance - in the worst case we'll have to do two relatively-slow initializations: loading library from disk, calling OS function to check if we're inside dynamic library, and search for required function in loaded dynamic library. In the best case we load values from two `LazyLock`s and extract existing entry from `HashMap`, which on modern CPU adds delay on the scale of tens of nanoseconds.
 
-## Conclusion
+## Conclusion and acknowledgements
 
-TODO
-1. single-attribute solution
-2. cunning caching
-3. cunning dynamic library lifetime management
+This was a fun project to do, but this is not the first attempt at bringing hotreloading to Rust. Here are some other attempts that I found interesting:
+
+1. [`hot-lib-reloader-rs`](https://crates.io/crates/hot-lib-reloader) - mature solution that also uses dynamic libraries for hotreloading, but requires a lot more configuration.
+2. [`subsecond`](https://crates.io/crates/subsecond) - solution by dioxus team that uses hotpatching and custom linker. Requires Dioxus CLI and wrapping hotreloadable code in `subsecond::call`.
+3. [`inline_tweak`](https://crates.io/crates/inline_tweak) - zero dependency solution that hotreloads literal values. Easy to use with a single macro.
+
+That's it for now, hope your iteration cycles will be faster!
