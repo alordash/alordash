@@ -8,7 +8,7 @@ Today I'd like to tell you how to effortlessly hotreload Rust code and how I've 
 
 > _This section contains short description of what a dynamic library is and how it works. If you already know it you can skip this part._
 
-Dynamic library is a collection of precompiled code represented by a file on disk. It's code can be loaded at run-time by your application using special OS functions. You give the path to dynamic library file to OS and it loads it into your process' memory, returning you a handle to OS object. Then you search for your function in dynamic library using its symbol. Symbol is just a unique name represented by a string of bytes. All public functions and static variables have unique symbol name. It is usually controlled by a compiler, but Rust allows you to set it explicitly using [`export_name`](https://doc.rust-lang.org/reference/abi.html#the-export_name-attribute) attribute:
+Dynamic library is a collection of precompiled code represented by a file on disk. It's code can be loaded at run-time by your application using special OS functions. You give the path to dynamic library file to OS and it loads it into your process' memory, returning you a handle to OS object. Then you search for your function in dynamic library using its symbol. Symbol is just a unique name represented by a string of bytes. Rust allows you to set it explicitly using [`export_name`](https://doc.rust-lang.org/reference/abi.html#the-export_name-attribute) attribute:
 
 ```rust
 #[unsafe(export_name = "my_function_symbol")]
@@ -22,7 +22,7 @@ use libloading::*;
 
 let lib = Library::new("/path/to/liblibrary.so").unwrap();
 let func: Symbol<unsafe extern "C" fn() -> u32> = lib.get(b"my_function").unwrap();
-func(); // function loaded from dynamic library
+unsafe { func() }; // function loaded from dynamic library
 ```
 
 To make your crate produce dynamic library instead of a object library you need to set crate type in `Cargo.toml` to either `dylib` or `cdylib`.:
@@ -34,7 +34,7 @@ crate-type = ["dylib"]
 crate-type = ["cdylib"]
 ```
 
-`dylib` is intended to be used by other Rust crates and uses unstable (as of now) Rust ABI. `cdylib` is intended to be used by other languages as it uses C ABI and produces libraries with smaller size because it strips Rust's metadata. For information about various crate types read about [Linkage](https://doc.rust-lang.org/reference/linkage.html) in the Rust reference.
+`dylib` is intended to be used by other Rust crates and uses unstable (as of now) Rust ABI. `cdylib` is intended to be used by foreign languages. It produces libraries with smaller size because it strips Rust's metadata. For information about various crate types read about [Linkage](https://doc.rust-lang.org/reference/linkage.html) in the Rust reference.
 
 ## Reloading code with dynamic library
 
@@ -66,7 +66,7 @@ This is basically the whole idea. But there are some limitations:
 
 2. Another dynamic library limitation is that you can not export functions with generics through them.
 
-   <details>
+  <details>
     <summary>Why generics can not be exported in dynamic libraries?</summary>
     Because function's definition alone is not enough for compiler to generate real code, it also needs to know how exactly this function is used. For example, if we write:
 
@@ -82,11 +82,18 @@ This is basically the whole idea. But there are some limitations:
     the compiler will generate two implementations of `string_value`: one for `i32` and one for `&str` because it uses static linking and knows all usage scenarios of `string_value`. When we build library for dynamic linking we can not know beforehand how our exported function will be used. One way to circumvent that is to use trait objects and dynamic dispatch:
 
     ```rust
-    fn string_value(t: &dyn ToString) -> String {
-       t.to_string();
+    pub fn string_value(t: &dyn ToString) -> String {
+       t.to_string()
     }
     ```
-   </details>
+
+    Another way is to create concrete type wrappers:
+    ```rust
+    pub fn string_value_i32(value: &i32) -> String {
+      string_value(value)
+    }
+    ```
+  </details>
 
 Next we will focus on implementation details, specifically: 1. how to store dynamic library, 2. how to wait for dynamic library to update and 3. how to make it convenient to use.
 
@@ -134,7 +141,7 @@ Next, let's try to make `get_fn` faster.
 
 ### Speeding-up functions search
 
-Symbol look-up can be relatively costly operation. It performs syscall to retrieve address of provided symbol in loaded dynamic library's memory. Fortunately, its result can be cached because symbols in a dynamic library can not move. The first time we obtain their pointer, we can cache it in a symbol name map. We can create wrapper over `libloading::Library` that holds inner library, exposes `get_fn` method and keeps a cache of symbols pointers:
+Symbol look-up can be relatively costly operation. Fortunately, its result can be cached because symbols in a dynamic library can not move. The first time we obtain their pointer, we can cache it in a symbol name map. We can create wrapper over `libloading::Library` that holds inner library, exposes `get_fn` method and keeps a cache of symbols pointers:
 
 ```rust
 struct LibraryWrapper {
@@ -142,26 +149,24 @@ struct LibraryWrapper {
     symbols_map: RwLock<HashMap<&'static [u8], *mut core::ffi::c_void>>
 }
 
-impl LibraryWrapper {
-    pub unsafe fn get_fn<F>(self: Arc<RwLock<Self>>, symbol_name: &'static [u8]) -> FnGuard<F> {
-        let fn_ptr =
-            if let Some(existing) = self.symbol_ptrs_map.read().unwrap().get(symbol_name) {
-                existing
-            } else {
-                let mut write = self.symbol_ptrs_map.write().unwrap();
-                let raw_fn_ptr = self
-                    .inner
-                    .get::<fn()>(symbol_name)
-                    .unwrap()
-                    .try_as_raw_ptr()
-                    .unwrap();
-                write.insert(symbol_name, raw_fn_ptr);
-                raw_fn_ptr
-            };
-        let f = core::mem::transmute_copy(&fn_ptr.cast::<()>());
-        let result = FnGuard { f, _lib_arc: lib.clone() };
-        return result;
-    }
+pub unsafe fn get_fn<F>(lib: Arc<RwLock<Self>>, symbol_name: &'static [u8]) -> FnGuard<F> {
+    let fn_ptr =
+        if let Some(existing) = lib.symbols_map.read().unwrap().get(symbol_name) {
+            *existing
+        } else {
+            let mut write = lib.symbols_map.write().unwrap();
+            let raw_fn_ptr = lib
+                .inner
+                .get::<fn()>(symbol_name)
+                .unwrap()
+                .try_as_raw_ptr()
+                .unwrap();
+            write.insert(symbol_name, raw_fn_ptr);
+            raw_fn_ptr
+        };
+    let f = core::mem::transmute_copy(&fn_ptr.cast::<()>());
+    let result = FnGuard { f, _lib_arc: lib.clone() };
+    return result;
 }
 
 // usage
@@ -190,7 +195,7 @@ let mut watcher = notify::recommended_watcher(|res: Result<notify::Event, notify
 watcher.watch("path/to/file/or/directory".as_ref(), RecursiveMode::Recursive).unwrap();
 ```
 
-The closure we passed will be called each time target file or any file in target directory is changed. We can run it to watch our dynamic library file and path `Arc` to closure, but we won't be able to reload our library because `Arc` does not allow mutating its contents.
+The closure we passed will be called each time target file or any file in target directory is changed. Note that you may need to use debounced version: [`notify-debouncer-full`](https://crates.io/crates/notify-debouncer-full) because cargo may write file multiple times, but for the sake of simplicity we will use regular version. We can run it to watch our dynamic library file and path `Arc` to closure, but we won't be able to reload our library because `Arc` does not allow mutating its contents.
 
 Naive approach to solve it would be to store `Mutex` in `Arc` for ability to lock, unload and reload our library in watcher's callback.  
 A better approach would be to use `RwLock`, since we mostly read from dynamic library - this happens each time we try to extract pointer to function from it using `get_fn` - and rarely write to it - only when we rebuild it.  
@@ -209,7 +214,7 @@ let lib_for_callback = lib.clone();
 let mut watcher = notify::recommended_watcher(|res| {
     let event = res.unwrap();
     if event.paths.contains(path) {
-        let new_lib = LibraryWraper::new(path);
+        let new_lib = LibraryWrapper::new(path);
         lib_for_callback.store(Arc::new(new_lib));  // store new library
     }
 }).unwrap();
@@ -218,7 +223,7 @@ watcher.watch(path, notify::RecursiveMode::NonRecursive).unwrap();
 // usage
 let func = lib
     .load_full()    // `ArcSwap` method
-    .get<fn() -> i32>(b"my_function");
+    .get_fn<fn() -> i32>(b"my_function");
 let result = func();
 ```
 
@@ -249,7 +254,8 @@ impl LibraryWrapper {
 impl Drop for LibraryWrapper {
     fn drop(&mut self) {
         // do not forget to remove copy of dynamic library
-        std::fs::remove_file(&self.lib_path)
+        self.inner.close().unwrap();
+        std::fs::remove_file(&self.lib_path);
     }
 }
 ```
@@ -276,7 +282,7 @@ We can put dynamic library `LazyLock` in static variable and let library initial
 static DYNAMIC_LIBRARY: LazyLock<Arc<ArcSwap<LibraryWrapper>>> =
     LazyLock::new(initialize_dynamic_library);
 
-fn initialize_dynamic_library() -> Arc<LibraryWrapper> {
+fn initialize_dynamic_library() -> Arc<ArcSwap<LibraryWrapper>> {
     let library_file_name = "your_library_name.so";
     let library_source_path = std::env::current_exe()
         .unwrap()
@@ -291,7 +297,7 @@ fn initialize_dynamic_library() -> Arc<LibraryWrapper> {
         library_source_path,
         shared_library_wrapper.clone(),
     );
-    return shared_library_wrapper.load_full();
+    return shared_library_wrapper;
 }
 
 // usage
@@ -319,7 +325,7 @@ So that we can call our hotreloadable functions without changing their callsites
 [lib]
 crate-type = ["rlib", "dylib"]
 ```
-This will force Rust compiler to generate both `my_library.rlib` and `my_library.so` files. `.rlib` file contains object code (`.o`) and is used for static linking by LLVM and GCC byte-code compilers.
+This will force Rust compiler to generate both `my_library.rlib` and `my_library.so` files. `.rlib` file contains object code (`.o`) and Rust metadata. It is needed for static linking of library so that we can call it's functions directly in our executable's code.
 
 Then we need to modify source function with our macros so that it will load dynamic library when called statically and execute actual function instructions when called through dynamic library. We have two ways to do it using our `#[hotreload]` macro:
 1. Generate two versions of our function: one will bear same name and be entrypoint for static calls that loads dynamic library, second will have actual function body and export name so that it can be loaded from dynamic library. This approach turns this:
@@ -379,7 +385,7 @@ fn is_outside_dynamic_library() -> bool {
 ```
 Notice that we do not need to pass pointer to function that we're trying to hotreload - the `is_outside_dynamic_library`'s pointer is enough to determine whether current module name, because it will also exist in two variants - as a staticaly and dynamically linked function.
 
-On Linux `get_module_name_from_ptr` uses `dladdr` OS function, on Windows - `GetModuleHandleExW` and `GetModuleFileNameW` OS functions. As most of syscalls these functions can be slow, and performing this check for each hotreloadable function call can be inexcussable on hotpaths. Fortunately, result of this function can also be cached! We can define static lazy bool variable and cache check result in it:
+On Linux `get_module_name_from_ptr` uses `dladdr` libc function, on Windows - `GetModuleHandleExW` and `GetModuleFileNameW` OS functions. Performing this check for each hotreloadable function call can be inexcussable on hotpaths. Fortunately, result of this function can also be cached! We can define static lazy bool variable and cache check result in it:
 ```rust
 fn is_outside_dynamic_library() -> bool {
     *IS_OUTSIDE_DYNAMIC_LIBRARY
@@ -435,7 +441,7 @@ We can also extract name of a crate in which our `#[hotreload]` macros is being 
 
 ### Result
 
-Now all we have to do to make a function hotreloadable is to apply `#[hotreload]` attribute! No need to configure anything else.
+Now all we have to do to make a function hotreloadable is to apply `#[hotreload]` attribute:
 ```rust
 #[hotreload]
 fn my_function() {}
@@ -456,13 +462,13 @@ impl Trait for Struct {
 // and any other function that you may find
 ```
 
-We also didn't sacrifice much of performance - in the worst case we'll have to do two relatively-slow initializations: loading library from disk, calling OS function to check if we're inside dynamic library, and search for required function in loaded dynamic library. In the best case we load values from two `LazyLock`s and extract existing entry from `HashMap`, which on modern CPU adds delay on the scale of tens of nanoseconds.
+We also didn't sacrifice much of performance - in the worst case we'll have to do three relatively-slow initializations: loading library from disk, calling OS function to check if we're inside dynamic library, and search for required function in loaded dynamic library. In the best case we load values from two `LazyLock`s and extract existing entry from `HashMap`.
 
 ## Conclusion and acknowledgements
 
 This was a fun project to do, but this is not the first attempt at bringing hotreloading to Rust. Here are some other attempts that I found interesting:
 
-1. [`hot-lib-reloader-rs`](https://crates.io/crates/hot-lib-reloader) - mature solution that also uses dynamic libraries for hotreloading, but requires a lot more configuration.
+1. [`hot-lib-reloader-rs`](https://crates.io/crates/hot-lib-reloader) - this crate that also uses dynamic libraries for hotreloading, but requires a lot more configuration.
 2. [`subsecond`](https://crates.io/crates/subsecond) - solution by dioxus team that uses hotpatching and custom linker. Requires Dioxus CLI and wrapping hotreloadable code in `subsecond::call`.
 3. [`inline_tweak`](https://crates.io/crates/inline_tweak) - zero dependency solution that hotreloads literal values. Easy to use with a single macro.
 
