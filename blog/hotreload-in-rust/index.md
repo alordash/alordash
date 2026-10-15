@@ -70,29 +70,29 @@ That's the basic idea, but there are some limitations:
     <summary>Why generics can not be exported in dynamic libraries?</summary>
     Because a function's definition alone is not enough for the compiler to generate real code, it also needs to know exactly how this function is used. For example, if we write:
 
-    ```rust
-    fn string_value<T: ToString>(t: &T) -> String {
-        t.to_string()
-    }
-
-    string_value(&1);
-    string_value("quo vadis");
-    ```
-
-    the compiler will generate two implementations of `string_value`: one for `i32` and one for `&str`. Because it uses static linking, it knows all ways `string_value` is used. When building a dynamically linked library, however, we can't know in advance how an exported function will be used. One workaround is to use trait objects and dynamic dispatch:
-
-    ```rust
-    pub fn string_value(t: &dyn ToString) -> String {
+   ```rust
+   fn string_value<T: ToString>(t: &T) -> String {
        t.to_string()
-    }
-    ```
+   }
 
-    Another way is to create concrete type wrappers:
-    ```rust
-    pub fn string_value_i32(value: &i32) -> String {
-      string_value(value)
-    }
-    ```
+   string_value(&1);
+   string_value("quo vadis");
+   ```
+
+   the compiler will generate two implementations of `string_value`: one for `i32` and one for `&str`. Because it uses static linking, it knows all ways `string_value` is used. When building a dynamically linked library, however, we can't know in advance how an exported function will be used. One workaround is to use trait objects and dynamic dispatch:
+
+   ```rust
+   pub fn string_value(t: &dyn ToString) -> String {
+       t.to_string()
+   }
+   ```
+
+   Another way is to create concrete type wrappers:
+   ```rust
+   pub fn string_value_i32(value: &i32) -> String {
+       string_value(value)
+   }
+   ```
   </details>
 
 Next, we will focus on implementation details: 1. how to store a dynamic library, 2. detect when it changes, and 3. make it convenient to use.
@@ -474,3 +474,5 @@ This was a fun project, but it's not first attempt to bring hotreloading to Rust
 3. [`inline_tweak`](https://crates.io/crates/inline_tweak) - zero-dependency solution that hotreloads literal values. Easy to use with a single macro.
 
 That's it for now. I hope this helps you shorten your iteration cycles!
+
+> __Link to `hotcode` source repository__ - https://github.com/alordash/hotcode
