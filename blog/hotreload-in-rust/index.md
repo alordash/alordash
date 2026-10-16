@@ -480,7 +480,9 @@ impl Trait for Struct {
 
 We haven't sacrificed much performance, either. In the worst case, we perform three relatively expensive operations: loading the library from disk, calling an OS function to check whether we're inside dynamic library, and looking up the required function in the loaded library. In the best case, we read values from two `LazyLock`s and retrieve an existing entry from a `HashMap`.
 
-I have benchmarked `#[hotreload]` in `hotcode` crate, results are available in [crate documentation](https://docs.rs/hotcode/1.0.2/hotcode/#benchmarks).
+You can see benchmark results in `hotcode`'s [documentation](https://docs.rs/hotcode/1.0.2/hotcode/#benchmarks).
+
+Keep in mind that this approach is not limited to Rust - hotreloading can be implemented in any programming language that can compile to and load dynamic library. That said, Rust's type system and memory model made this project significantly easier to develop.
 
 ## Conclusion and Acknowledgements
 
