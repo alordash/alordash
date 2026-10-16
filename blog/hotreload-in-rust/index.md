@@ -1,5 +1,11 @@
 # Hotreload in Rust
 
+<video autoplay loop muted width="100%" playsinline preload="metadata">
+  <source src="https://raw.githubusercontent.com/alordash/hotcode/cc33cf97e0f1d53db0105504b3e1a10a5eee60f2/media/hotreload_renderust.mp4" type="video/mp4">
+  Your browser does not support the video tag.
+</video>
+
+
 Hotreloading lets you change the code of a running application without restarting it after every change. It also preserves the program's state, so you don't have to repeat setup tasks such as connecting to DB, opening and editing test files, or arranging cars for a crash simulation in your physics engine.
 
 Today, I'd like to show you how to hotreload Rust code using dynamic libraries, and explain how I implemented it in my [`hotcode`](https://crates.io/crates/hotcode) crate.
