@@ -1,6 +1,6 @@
 # Hotreload in Rust
 
-Hotreloading lets you change the code of a running application without restarting it after every change. It also preserves the program's state, so you don't have to repeat setup tasks such as connecting to DB, opening and editing test files, or arranging dummies for a car-crash simulation in your physics engine.
+Hotreloading lets you change the code of a running application without restarting it after every change. It also preserves the program's state, so you don't have to repeat setup tasks such as connecting to DB, opening and editing test files, or arranging cars for a crash simulation in your physics engine.
 
 Today, I'd like to show you how to hotreload Rust code using dynamic libraries, and explain how I implemented it in my [`hotcode`](https://crates.io/crates/hotcode) crate.
 
