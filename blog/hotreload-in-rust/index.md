@@ -4,6 +4,21 @@ Hotreloading lets you change the code of a running application without restartin
 
 Today, I'd like to show you how to hotreload Rust code using dynamic libraries, and explain how I implemented it in my [`hotcode`](https://crates.io/crates/hotcode) crate.
 
+## Table of Contents
+
+- [Dynamic Libraries](#dynamic-libraries)
+- [Reloading Code with Dynamic Library](#reloading-code-with-dynamic-library)
+- [Dynamic Library Storage](#dynamic-library-storage)
+  - [Protection against in-use unload](#protection-against-in-use-unload)
+  - [Faster function search](#faster-function-search)
+- [Dynamic Library Update](#dynamic-library-update)
+- [Simplifying Usage](#simplifying-usage)
+  - [Lazy dynamic library initialization](#lazy-dynamic-library-initialization)
+  - [Checking whether we are inside dynamic library](#checking-whether-we-are-inside-dynamic-library)
+  - [Supporting multiple libraries](#supporting-multiple-libraries)
+  - [Result](#result)
+- [Conclusion and Acknowledgements](#conclusion-and-acknowledgements)
+
 ## Dynamic Libraries
 
 > _This section briefly explains what a dynamic library is and how it works. If you're already know it you can skip this part._
@@ -36,7 +51,7 @@ crate-type = ["cdylib"]
 
 `dylib` is intended for use by other Rust crates and uses Rust's (currently) unstable ABI. `cdylib` is intended for use by foreign languages and produces smaller libraries because it strips Rust metadata. For more information about crate types, you can read about [Linkage](https://doc.rust-lang.org/reference/linkage.html) in the Rust Reference.
 
-## Reloading code with dynamic library
+## Reloading Code with Dynamic Library
 
 One of the simplest ways to perform hotreload in Rust is to use dynamic libraries to update a function's code. The idea is simple: instead of calling a statically linked function, we load a dynamic library and call a function from it. After changing the code, we unload the old library and load the updated version. It looks roughly like this:
 
@@ -97,7 +112,7 @@ That's the basic idea, but there are some limitations:
 
 Next, we will focus on implementation details: 1. how to store a dynamic library, 2. detect when it changes, and 3. make it convenient to use.
 
-## 1. Dynamic library storage
+## Dynamic Library Storage
 
 In code, a dynamic library is represented by a `libloading::Library` struct, which wraps a handle to an OS object. This handle must remain alive while any thread is executing code from the library. Unloading a library while one of its functions is running causes undefined behavior.
 
@@ -177,7 +192,7 @@ f();
 
 Now we can store a dynamic library in a convenient `LibraryWrapper` structure that keeps the library alive and offers fast function search.
 
-## 2. Dynamic library update
+## Dynamic Library Update
 
 We want our application to reload dynamic library automatically whenever we rebuild it. To do this, we need to watch the compiled library file for changes. This can be done using the [`notify`](https://crates.io/crates/notify) crate provides cross-platform filesystem watchers. A watcher runs in a separate thread and invokes a callback when target file changes - for example, when it's created, deleted, or modified. Here's a basic example:
 
@@ -263,7 +278,7 @@ impl Drop for LibraryWrapper {
 
 Finally, let's make this infrastructure easier to use.
 
-## 3. Simplifying usage
+## Simplifying Usage
 
 As you can see, hotreloading functions currently requires several steps: initializing library, spawning watcher, manually loading functions before calling them, and so on. We can replace all of this with a single attribute macro:
 
@@ -465,7 +480,7 @@ impl Trait for Struct {
 
 We haven't sacrificed much performance, either. In the worst case, we perform three relatively expensive operations: loading the library from disk, calling an OS function to check whether we're inside dynamic library, and looking up the required function in the loaded library. In the best case, we read values from two `LazyLock`s and retrieve an existing entry from a `HashMap`.
 
-## Conclusion and acknowledgements
+## Conclusion and Acknowledgements
 
 This was a fun project, but it's not first attempt to bring hotreloading to Rust. Here are a few other approaches I found interesting:
 
