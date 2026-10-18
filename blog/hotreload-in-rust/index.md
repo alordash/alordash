@@ -27,7 +27,7 @@ Today, I'd like to show you how to hotreload Rust code using dynamic libraries, 
 
 ## Dynamic Libraries
 
-> _This section briefly explains what a dynamic library is and how it works. If you're already know it you can skip this part._
+> _This section briefly explains what a dynamic library is and how it works. If you already know it you can skip this part._
 
 A dynamic library is a collection of precompiled code represented by a file on disk. Its code can be loaded at run-time by your application using special OS functions. You give the path to a dynamic library file to the OS and it loads it into your process's memory, returning a handle to an OS object. Then you search for your function in dynamic library using its symbol. A symbol is just a unique name represented by a string of bytes. Rust allows you to set it explicitly using [`export_name`](https://doc.rust-lang.org/reference/abi.html#the-export_name-attribute) attribute:
 
