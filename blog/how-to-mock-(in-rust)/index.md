@@ -39,7 +39,7 @@ This is of course very inconvenient, because:
 2. Now you have `temp_file.txt` on your disk that you forgot to clean. Or you didn't, but maybe your disk is full and now your test fails because of it (instead of actually testing the function's behavior). Or maybe test process doesn't have rights to write file to the specified path. Or maybe another process rewrote this file before you could read it and now your test fails (again for irrelevant reason). One big minefield!
 3. You are depending on `read_file` implementation. What if someone changes it, for example, to return an error if given file doesn't have `.md` extension? The test will fail for irrelevant reason.
 
-That's where the mocks come to the rescue: instead of depending on `read_file`'s implementation, you set its behavior yourself:
+That's where the mocks come to the rescue: instead of depending on `read_file`'s implementation, you set its behavior in test yourself:
 ```rust
 #[mock]
 fn read_file(path: Path) -> Result<String> {
