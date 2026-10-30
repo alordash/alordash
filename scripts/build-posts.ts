@@ -61,7 +61,7 @@ function escapeHtml(s: string): string {
 
 function extractTitle(md: string): string {
     const m = md.match(/^#\s+(.+?)\s*$/m);
-    return m ? m[1].trim() : "Post";
+    return m ? m[1].trim() : "Nameless post";
 }
 
 const slugs = readdirSync(distBlog, { withFileTypes: true })
