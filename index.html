@@ -5,7 +5,10 @@
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <title>127.0.0.alordash</title>
         <script>
-            document.documentElement.classList.toggle("dark", localStorage.getItem("theme") === "dark");
+            document.documentElement.classList.toggle(
+                "dark",
+                localStorage.getItem("theme") === "dark",
+            );
         </script>
         <link rel="stylesheet" href="./style.css" />
     </head>
@@ -14,7 +17,13 @@
             <a id="blog-link" href="./">Home</a>
             <span class="header-actions">
                 <span class="tagline">blog about software</span>
-                <button class="theme-toggle" type="button" aria-label="Switch color theme">Dark</button>
+                <button
+                    class="theme-toggle"
+                    type="button"
+                    aria-label="Switch color theme"
+                >
+                    Dark
+                </button>
             </span>
         </header>
 

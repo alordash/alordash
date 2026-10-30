@@ -1,4 +1,3 @@
-
 const main = document.querySelector("main")!;
 const blogLink = document.querySelector<HTMLAnchorElement>("#blog-link")!;
 const isPostPage = new URL(".", location.href).href !== blogLink.href;
@@ -15,12 +14,17 @@ function showPostDates() {
 
 function setDate(time: HTMLTimeElement, date: string) {
     time.dateTime = date;
-    time.textContent = new Date(date).toLocaleDateString("en", { dateStyle: "medium", timeZone: "UTC" });
+    time.textContent = new Date(date).toLocaleDateString("en", {
+        dateStyle: "medium",
+        timeZone: "UTC",
+    });
 }
 
 const themeToggle = document.querySelector<HTMLButtonElement>(".theme-toggle")!;
 
-themeToggle.textContent = document.documentElement.classList.contains("dark") ? "Light" : "Dark";
+themeToggle.textContent = document.documentElement.classList.contains("dark")
+    ? "Light"
+    : "Dark";
 
 themeToggle.addEventListener("click", () => {
     const dark = !document.documentElement.classList.contains("dark");

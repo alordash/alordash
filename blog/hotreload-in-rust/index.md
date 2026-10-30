@@ -5,7 +5,6 @@
   Your browser does not support the video tag.
 </video>
 
-
 Hotreloading lets you change the code of a running application without restarting it after every change. It also preserves the program's state, so you don't have to repeat setup tasks such as connecting to DB, opening and editing test files, or arranging cars for a crash simulation in your physics engine.
 
 Today, I'd like to show you how to hotreload Rust code using dynamic libraries, and explain how I implemented it in my [`hotcode`](https://crates.io/crates/hotcode) crate.
@@ -15,14 +14,14 @@ Today, I'd like to show you how to hotreload Rust code using dynamic libraries, 
 - [Dynamic Libraries](#dynamic-libraries)
 - [Reloading Code with Dynamic Library](#reloading-code-with-dynamic-library)
 - [Dynamic Library Storage](#dynamic-library-storage)
-  - [Protection against in-use unload](#protection-against-in-use-unload)
-  - [Faster function search](#faster-function-search)
+    - [Protection against in-use unload](#protection-against-in-use-unload)
+    - [Faster function search](#faster-function-search)
 - [Dynamic Library Update](#dynamic-library-update)
 - [Simplifying Usage](#simplifying-usage)
-  - [Lazy dynamic library initialization](#lazy-dynamic-library-initialization)
-  - [Checking whether we are inside dynamic library](#checking-whether-we-are-inside-dynamic-library)
-  - [Supporting multiple libraries](#supporting-multiple-libraries)
-  - [Result](#result)
+    - [Lazy dynamic library initialization](#lazy-dynamic-library-initialization)
+    - [Checking whether we are inside dynamic library](#checking-whether-we-are-inside-dynamic-library)
+    - [Supporting multiple libraries](#supporting-multiple-libraries)
+    - [Result](#result)
 - [Conclusion and Acknowledgements](#conclusion-and-acknowledgements)
 
 ## Dynamic Libraries
@@ -91,29 +90,31 @@ That's the basic idea, but there are some limitations:
     <summary>Why generics can not be exported in dynamic libraries?</summary>
     Because a function's definition alone is not enough for the compiler to generate real code, it also needs to know exactly how this function is used. For example, if we write:
 
-   ```rust
-   fn string_value<T: ToString>(t: &T) -> String {
-       t.to_string()
-   }
+```rust
+fn string_value<T: ToString>(t: &T) -> String {
+    t.to_string()
+}
 
-   string_value(&1);
-   string_value("quo vadis");
-   ```
+string_value(&1);
+string_value("quo vadis");
+```
 
-   the compiler will generate two implementations of `string_value`: one for `i32` and one for `&str`. Because it uses static linking, it knows all ways `string_value` is used. When building a dynamically linked library, however, we can't know in advance how an exported function will be used. One workaround is to use trait objects and dynamic dispatch:
+the compiler will generate two implementations of `string_value`: one for `i32` and one for `&str`. Because it uses static linking, it knows all ways `string_value` is used. When building a dynamically linked library, however, we can't know in advance how an exported function will be used. One workaround is to use trait objects and dynamic dispatch:
 
-   ```rust
-   pub fn string_value(t: &dyn ToString) -> String {
-       t.to_string()
-   }
-   ```
+```rust
+pub fn string_value(t: &dyn ToString) -> String {
+    t.to_string()
+}
+```
 
-   Another way is to create concrete type wrappers:
-   ```rust
-   pub fn string_value_i32(value: &i32) -> String {
-       string_value(value)
-   }
-   ```
+Another way is to create concrete type wrappers:
+
+```rust
+pub fn string_value_i32(value: &i32) -> String {
+    string_value(value)
+}
+```
+
   </details>
 
 Next, we will focus on implementation details: 1. how to store a dynamic library, 2. detect when it changes, and 3. make it convenient to use.
@@ -328,6 +329,7 @@ f();
 ```
 
 Next, let's replace this:
+
 ```rust
 #[unsafe(export_name = "my_function")]
 fn my_function() {}
@@ -335,69 +337,76 @@ fn my_function() {}
 let f = (*DYNAMIC_LIBRARY).get_fn<fn() -> i32>(b"my_function");
 f();
 ```
+
 with this:
+
 ```rust
 #[hotreload]    // procedural macro
 fn my_function() {}
 
 my_function();
 ```
+
 This lets us call hotreloadable functions without changing their call sites. To do it we need to enable both static and dynamic linking of our library crate; this can be done by using both `rlib` and `dylib` crate types in `Cargo.toml`:
+
 ```toml
 [lib]
 crate-type = ["rlib", "dylib"]
 ```
+
 This tells the Rust compiler to generate both `my_library.rlib` and `my_library.so`. The `.rlib` file contains object code (`.o`) and Rust metadata, and is used to statically link the library so its functions can be called directly from the executable.
 
 Next, our macro needs to transform source function so that calls from statically linked code load dynamic library, while calls through dynamic library execute function's actual body. We can implement this in two ways with `#[hotreload]` macro:
+
 1. Generate two versions of our function: one will bear same name and be an entrypoint for static calls that loads dynamic library; second will have actual function body and export name so that it can be loaded from dynamic library. This approach turns this:
-   ```rust
-   #[hotreload]
-   fn my_function(v: i32) -> i32 { v + 1 }
-   ```
-   into this:
-   ```rust
-   // entrypoint for static calls
-   fn my_function(v: i32) -> i32 {
-       let f = (*DYNAMIC_LIBRARY).get_fn<fn(i32) -> i32>(b"__hotreload_my_function");
-       f(v)
-   }
-   
-   // actual implementation reachable only through dynamic library
-   #[unsafe(export_name = "__hotreload_my_function")]
-   fn __hotreload_my_function(v: i32) -> i32 { v + 1 }
-   ```
-   However, this approach doesn't work for functions inside trait implementations because it creates a new function that isn't part of the trait implementation.
+    ```rust
+    #[hotreload]
+    fn my_function(v: i32) -> i32 { v + 1 }
+    ```
+    into this:
+    ```rust
+    // entrypoint for static calls
+    fn my_function(v: i32) -> i32 {
+        let f = (*DYNAMIC_LIBRARY).get_fn<fn(i32) -> i32>(b"__hotreload_my_function");
+        f(v)
+    }
+
+    // actual implementation reachable only through dynamic library
+    #[unsafe(export_name = "__hotreload_my_function")]
+    fn __hotreload_my_function(v: i32) -> i32 { v + 1 }
+    ```
+    However, this approach doesn't work for functions inside trait implementations because it creates a new function that isn't part of the trait implementation.
 2. Add a check for whether we're currently in a statically or dynamically linked function inside each hotreloadable function. If we're inside a statically linked function, then we need to load dynamic library and call it. If we're inside a dynamically linked function, then we just execute actual function's instructions. This approach turns this:
-   ```rust
-   #[hotreload]
-   fn my_function(v: i32) -> i32 { v + 1 }
-   ```
-   into this:
-   ```rust
-   #[unsafe(export_name = "__hotreload_my_function")]
-   fn my_function(v: i32) -> i32 {
-       if is_outside_dynamic_library() {
-           let f = (*DYNAMIC_LIBRARY).get_fn<fn(i32) -> i32>(b"__hotreload_my_function");
-           return f(v);
-       }
-       // source function's body
-       v + 1
-   }
-   ```
-   This approach works with any function because it doesn't change function's signature or create new syntax items; it only modifies function body. Unlike the first approach, it can therefore also be used inside trait implementations:
-   ```rust
-   impl Trait for Struct {
-       #[hotreload]
-       fn work(&self) { self.do_something(); }
-   }
-   ```
+    ```rust
+    #[hotreload]
+    fn my_function(v: i32) -> i32 { v + 1 }
+    ```
+    into this:
+    ```rust
+    #[unsafe(export_name = "__hotreload_my_function")]
+    fn my_function(v: i32) -> i32 {
+        if is_outside_dynamic_library() {
+            let f = (*DYNAMIC_LIBRARY).get_fn<fn(i32) -> i32>(b"__hotreload_my_function");
+            return f(v);
+        }
+        // source function's body
+        v + 1
+    }
+    ```
+    This approach works with any function because it doesn't change function's signature or create new syntax items; it only modifies function body. Unlike the first approach, it can therefore also be used inside trait implementations:
+    ```rust
+    impl Trait for Struct {
+        #[hotreload]
+        fn work(&self) { self.do_something(); }
+    }
+    ```
 
 I initially used the first approach in `hotcode`, but I wasn't satisfied that the macro couldn't be used everywhere. So I came up with the second approach, which we'll use here.
 
 ### Checking whether we are inside dynamic library
 
 This check is core of our system. We need to ask OS which module contains current function's address, then compare that module's path with `std::env::current_exe()`. If they match, we're in a statically linked function; otherwise, we're in dynamic library. Platform-agnostic pseudocode for this check looks like this:
+
 ```rust
 fn is_outside_dynamic_library() -> bool {
     let current_fn_ptr = is_outside_dynamic_library as *const _;
@@ -405,9 +414,11 @@ fn is_outside_dynamic_library() -> bool {
     return current_module_name != std::env::current_exe();
 }
 ```
+
 Notice that we don't need to pass a pointer to the function we're trying to hotreload. The pointer to `is_outside_dynamic_library` is enough to determine the current module, because that function also exists in two versions: one statically linked and one dynamically linked.
 
 On Linux, `get_module_name_from_ptr` uses the libc function `dladdr`. On Windows, it uses OS functions `GetModuleHandleExW` and `GetModuleFileNameW`. Performing this check on every hotreloadable function call could be too expensive on hot paths. Fortunately, we can cache result in a lazily initialized static `bool`:
+
 ```rust
 fn is_outside_dynamic_library() -> bool {
     *IS_OUTSIDE_DYNAMIC_LIBRARY
@@ -464,6 +475,7 @@ We can also get the name of the crate where `#[hotreload]` is used from the `CAR
 ### Result
 
 Now, to make a function hotreloadable, all we have to do is apply the `#[hotreload]` attribute:
+
 ```rust
 #[hotreload]
 fn my_function() {}
@@ -500,4 +512,4 @@ This was a fun project, but it's not first attempt to bring hotreloading to Rust
 
 That's it for now. I hope this helps you shorten your iteration cycles!
 
-> __Link to `hotcode` source repository__ - https://github.com/alordash/hotcode
+> **Link to `hotcode` source repository** - https://github.com/alordash/hotcode
