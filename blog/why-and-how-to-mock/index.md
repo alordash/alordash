@@ -205,3 +205,17 @@ fn position_vacation_days_ok() {
 ```
 
 We still have same 6 tests, but if we add new `Contract` we would have 7 tests with mocks and 9 without them. The formula for number of tests is actually quite simple: without mocks it is product of number of possible argument values, with mocks it is their sum + 1, because we need a test for `vacation_days` function that aggregates results from split functions. This way we moved number of tests from geometrical to arithmetical progression.
+
+### Mocks force you to write clean code
+
+```rust
+pub fn frost_warning(city: &str) -> Option<String> {
+    let url = format!("https://api.weather.example/min-temp?city={city}");
+    let body = http::get(&url).expect("weather service must respond");
+    let min_temperature: f64 = body.trim().parse().expect("response must be number");
+    if min_temperature < 0.0 {
+        return Some(format!("Frost tonight in {city}"));
+    }
+    return None;
+}
+```
