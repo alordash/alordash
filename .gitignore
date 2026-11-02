@@ -23,8 +23,8 @@
 !blog/hotreload-in-rust/
 !blog/hotreload-in-rust/**
 
-!blog/why-and-how-to-mock-(in-rust)/
-!blog/why-and-how-to-mock-(in-rust)/**
+!blog/why-and-how-to-mock/
+!blog/why-and-how-to-mock/**
 
 !scripts/
 !scripts/build-posts.ts
