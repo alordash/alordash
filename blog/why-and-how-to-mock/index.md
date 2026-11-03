@@ -289,3 +289,6 @@ All that's left to do is to write one or two integrations tests for `get_tempera
 
 ## Conclusion
 
+Inability to mock functions hints at badly structured code.
+
+Functions that interact with an outer world (I/O, systems integrations, etc) will always be unstable, mocking outer world is the only solution to have deterministic tests.
