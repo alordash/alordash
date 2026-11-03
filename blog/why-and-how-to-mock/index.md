@@ -116,12 +116,20 @@ fn vacation_days_test(contract: Contract, position: Position, expected_days: u32
 
 #[test]
 fn vacation_days_ok() {
-    vacation_days_test(Contract::FullTime, Position::Junior, 20);
-    vacation_days_test(Contract::FullTime, Position::Middle, 22);
-    vacation_days_test(Contract::FullTime, Position::Senior, 25);
-    vacation_days_test(Contract::PartTime, Position::Junior, 10);
-    vacation_days_test(Contract::PartTime, Position::Middle, 12);
-    vacation_days_test(Contract::PartTime, Position::Senior, 15);
+    test(Contract::FullTime, Position::Junior, 20);
+    test(Contract::FullTime, Position::Middle, 22);
+    test(Contract::FullTime, Position::Senior, 25);
+    test(Contract::PartTime, Position::Junior, 10);
+    test(Contract::PartTime, Position::Middle, 12);
+    test(Contract::PartTime, Position::Senior, 15);
+
+    fn test(contract: Contract, position: Position, expected_days: u32) {
+        // Act
+        let actual_days = vacation_days(contract, position);
+    
+        // Assert
+        assert_eq!(actual_days, expected_days);
+    }
 }
 ```
 
@@ -174,33 +182,33 @@ fn vacation_days_ok() {
     position_vacation_days.verify_calls();
 }
 
-fn contract_vacation_days_test(contract: Contract, expected_days: u32) {
-    // Act
-    let actual_days = contract_vacation_days(contract);
-
-    // Assert
-    assert_eq!(actual_days, expected_days);
-}
-
 #[test]
 fn contract_vacation_days_ok() {
-    contract_vacation_days_test(Contract::FullTime, 20);
-    contract_vacation_days_test(Contract::PartTime, 10);
-}
-
-fn position_vacation_days_test(position: Position, expected_days: u32) {
-    // Act
-    let actual_days = position_vacation_days(position);
-
-    // Assert
-    assert_eq!(actual_days, expected_days);
+    test(Contract::FullTime, 20);
+    test(Contract::PartTime, 10);
+    
+    fn test(contract: Contract, expected_days: u32) {
+        // Act
+        let actual_days = contract_vacation_days(contract);
+    
+        // Assert
+        assert_eq!(actual_days, expected_days);
+    }
 }
 
 #[test]
 fn position_vacation_days_ok() {
-    position_vacation_days_test(Position::Junior, 0);
-    position_vacation_days_test(Position::Middle, 2);
-    position_vacation_days_test(Position::Senior, 5);
+    test(Position::Junior, 0);
+    test(Position::Middle, 2);
+    test(Position::Senior, 5);
+    
+    fn test(position: Position, expected_days: u32) {
+        // Act
+        let actual_days = position_vacation_days(position);
+    
+        // Assert
+        assert_eq!(actual_days, expected_days);
+    }
 }
 ```
 
