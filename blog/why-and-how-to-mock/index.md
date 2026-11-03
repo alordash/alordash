@@ -12,8 +12,8 @@ Second part is about how to write such mocking library in Rust and how behind th
 
 In my opinion there are three reasons for mocking your code in unit tests:
 
-1. mocks increase tests stability because they shield your logic from having to deal with network, file system, OS handles and other unstable things;
-2. they can reduce number of test cases (due to combinatorical explosion);
+1. mocks increase tests stability because they shield your logic from having to deal with network, file system, OS handles and other unstable things,
+2. they can reduce number of test cases (due to combinatorical explosion),
 3. they force you to write clean code because it is easier to test and mock the function that does one thing than the function that does a lot of things.
 
 ### Mocks increase tests stability
@@ -51,11 +51,11 @@ assert_eq!(result, quantity * price);
 This is, of course, very inconvenient, because:
 
 1. You are arranging file to test a function that doesn't touch file itself - all it does is get the price from some `get_price()` function.
-2. Now you have `price.txt` file on your disk that you forgot to clean. Or you didn't, but maybe your disk is full, or maybe test's process doesn't have rights to write this file, or maybe another process rewrote this file before you called `get_price()`. This all produces test failures that are irrelevant to the code that we actually want to test - the body of `calculate_price`.
+2. Now you have `price.txt` file on your disk that you forgot to clean. Or you didn't, but maybe your disk is full, or maybe test's process doesn't have rights to write this file, or maybe another process rewrote this file before you called `get_price()`. And that's just the first `unwrap`, this function can also fail because the value inside file is not a valid number string. All of this produces test failures that are irrelevant to the code that we actually want to test - the body of `calculate_price`.
 
 > If price was read from DB then you'd have to setup a whole test DB just for this one small test.
 
-3. You are depending on `get_price()` implementation. What if someone from your team changes it, for example, by replacing `price.txt` with `current_price.txt`? The test will fail for irrelevant reason again.
+3. You are depending on `get_price()` implementation. What if someone from your team changes it, for example, by replacing `price.txt` with `current_price.txt`? The test will fail for irrelevant reason again.)
 
 That's where the mocks come to the rescue: instead of depending on `get_price`'s implementation, you set its behavior in test yourself:
 
@@ -216,14 +216,76 @@ We still have same 6 tests, but if we add new `Contract` we would have 7 tests w
 
 ### Mocks force you to write clean code
 
+Consider following small function that checks whether it is cold in a given city. It performs http request to weather service and checks whether returned temperature is below zero.
 ```rust
-pub fn frost_warning(city: &str) -> Option<String> {
-    let url = format!("https://api.weather.example/min-temp?city={city}");
-    let body = http::get(&url).expect("weather service must respond");
-    let min_temperature: f64 = body.trim().parse().expect("response must be number");
-    if min_temperature < 0.0 {
-        return Some(format!("Frost tonight in {city}"));
-    }
-    return None;
+pub fn is_it_cold(city: &str) -> bool {
+    let url = format!("https://api.weather.example/temp?city={city}");
+    let body = http::get(&url).unwrap();
+    let temperature: f64 = body.trim().parse().unwrap();
+    return temperature < 0.0;
 }
 ```
+
+Seems very simple, right? But this function actually performs 4 different steps:
+1. format url,
+2. perform http request,
+3. parse response body as f64,
+4. check temperature.
+
+If you want to test this function, you will have to write unit tests for all of them. Also, you will need to deploy a real weather api server, because you cannot mock `http::get` function.
+
+All this pain of writing tests would go away if we refactor our code to be more clean. The main problem is that the process of city's temperature retrieval is inlined in the function. I think it is complex enough that it deserves it's separate function. This both makes our function cleaner and mockable:
+
+```rust
+pub fn is_it_cold(city: &str) -> bool {
+    let temperature = get_temperature(city);
+    return temperature < 0.0;
+}
+
+#[mock]
+fn get_temperature(city: &str) -> f64 {
+    let url = format!("https://api.weather.example/temp?city={city}");
+    let body = http::get(&url).unwrap();
+    return body.trim().parse().unwrap();
+}
+```
+
+And then it becomes very easy to write tests:
+
+```rust
+fn temp_is_negative_returns_true() {
+    // Arrange
+    let city = "macondo";
+    get_temperature::setup(city).returns(-1.0);
+
+    // Act
+    let result = is_it_cold(city);
+
+    // Assert
+    assert!(result);
+    get_temperature::verify_calls();
+}
+
+fn temp_is_zero_or_positive_returns_false() {
+    test(0);
+    test(1);
+    
+    fn test(temperature: u64) {
+        // Arrange
+        let city = "macondo";
+        get_temperature::setup(city).returns(temperature);
+
+        // Act
+        let result = is_it_cold(city);
+
+        // Assert
+        assert!(!result);
+        get_temperature::verify_calls();
+    }
+}
+```
+
+All that's left to do is to write one or two integrations tests for `get_temperature` function that perform real calls.
+
+## Conclusion
+
