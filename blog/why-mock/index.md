@@ -1,14 +1,10 @@
-# Why and How to Mock
+# Why Mock
 
 Mocking is an approach that makes writing unit tests easier. It hides implementation details of functions called by the method for which you are currently writing tests. This allows creating stable and simple unit tests, while also indulging writing clean code. Because if you can't mock your dependencies or their setup takes more effort than the test itself, your code is probably coupled too tight with functions that have no clear responsibility.
 
-Today I want to show why it's important to mock your functions in unit tests and how to do it in Rust painlessly. This post consists of two parts: why you should mock and how to mock in Rust.
+Today I want to show how mocks simplify tests writing and implicitly force you to write better structured code. And although code examples there are written in Rust, the principles we will discuss can be applied in any programming language that has mature mocking library.
 
-First part is about how mocks simplify tests writing and implicitly force you to write better structured code. And although code examples there are written in Rust, the principles we will discuss can be applied in any programming language that has mature mocking library.
-
-Second part is about how to write such mocking library in Rust and how behind the scenes of mocking frameworks looks like. Some of its ideas can be used in other programming languages, but it mostly aims at Rust.
-
-## Why Mock
+## Benefits of mocks
 
 In my opinion there are three reasons for mocking your code in unit tests:
 
