@@ -281,10 +281,8 @@ fn temp_is_zero_or_positive_returns_false() {
 }
 ```
 
-All that's left to do is to write one or two integrations tests for `get_temperature` function that perform real calls.
+All that's left to do is to write one or two integrations tests for `get_temperature` function that perform real http calls.
 
 ## Conclusion
 
-Inability to mock functions hints at badly structured code.
-
-Functions that interact with an outer world (I/O, systems integrations, etc) will always be unstable, mocking outer world is the only solution to have deterministic tests.
+In my experience, inability to mock functions usually hints at badly structured code. Not once various problems and bugs in code became apparent to me only after I tried to write unit-test for some function that required mocking something. So I encourage everyone who wants to create realiable applications to try to cover as much as possible lines of code with test. I think that this is especially important now, when we have all kinds of AI agents ready to find and exploit all types of vulnerabilties. Fortunately though, the same AI agents can automate most of unit-tests writing, so there's not much holding us from increasing test code-coverage.
