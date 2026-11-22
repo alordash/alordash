@@ -114,7 +114,7 @@ fn vacation_days_ok() {
     fn test(contract: Contract, position: Position, expected_days: u32) {
         // Act
         let actual_days = vacation_days(contract, position);
-
+    
         // Assert
         assert_eq!(actual_days, expected_days);
     }
@@ -174,11 +174,11 @@ fn vacation_days_ok() {
 fn contract_vacation_days_ok() {
     test(Contract::FullTime, 20);
     test(Contract::PartTime, 10);
-
+    
     fn test(contract: Contract, expected_days: u32) {
         // Act
         let actual_days = contract_vacation_days(contract);
-
+    
         // Assert
         assert_eq!(actual_days, expected_days);
     }
@@ -189,11 +189,11 @@ fn position_vacation_days_ok() {
     test(Position::Junior, 0);
     test(Position::Middle, 2);
     test(Position::Senior, 5);
-
+    
     fn test(position: Position, expected_days: u32) {
         // Act
         let actual_days = position_vacation_days(position);
-
+    
         // Assert
         assert_eq!(actual_days, expected_days);
     }
@@ -216,7 +216,6 @@ pub fn is_it_cold(city: &str) -> bool {
 ```
 
 Seems very simple, right? But this function actually performs 4 different steps:
-
 1. format url,
 2. perform http request,
 3. parse response body as f64,
@@ -261,7 +260,7 @@ fn temp_is_negative_returns_true() {
 fn temp_is_zero_or_positive_returns_false() {
     test(0.0);
     test(1.0);
-
+    
     fn test(temperature: f64) {
         // Arrange
         let city = "macondo";
@@ -281,8 +280,6 @@ All that's left to do is to write one or two integration tests for `get_temperat
 
 ## Conclusion
 
-In my experience, inability to mock functions usually hints at badly structured code. More than once, various problems and bugs in code became apparent to me only after I tried to write unit test for some function that required mocking something.
-
-So I encourage everyone who wants to create reliable applications to try to cover as many lines of code as possible with tests. I think that this is especially important now, when we have all kinds of AI agents ready to find and exploit all types of vulnerabilities. Fortunately though, the same AI agents can automate most of unit test writing, so there's not much stopping us from increasing test coverage.
+In my experience, inability to mock functions usually hints at badly structured code. More than once, various problems and bugs in code became apparent to me only after I tried to write unit test for some function that required mocking something. So I encourage everyone who wants to create reliable applications to try to cover as many lines of code as possible with tests. I think that this is especially important now, when we have all kinds of AI agents ready to find and exploit all types of vulnerabilities. Fortunately though, the same AI agents can automate most of unit test writing, so there's not much stopping us from increasing test coverage.
 
 That's it for now. I hope this helps you with writing reliable and tested software!
