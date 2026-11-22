@@ -1,20 +1,20 @@
 # Why Mock
 
-Mocking is an approach that makes writing unit tests easier. It hides implementation details of functions called by the method for which you are currently writing tests. This allows creating stable and simple unit tests, while also indulging writing clean code. Because if you can't mock your dependencies or their setup takes more effort than the test itself, your code is probably coupled too tight with functions that have no clear responsibility.
+Mocking is an approach that makes writing unit tests easier. It hides implementation details of functions called by the method for which you are currently writing tests. This allows creating stable and simple unit tests, while also encouraging writing clean code. Because if you can't mock your dependencies or their setup takes more effort than the test itself, your code is probably coupled too tightly with functions that have no clear responsibility.
 
-Today I want to show how mocks simplify tests writing and implicitly force you to write better structured code. And although code examples there are written in Rust, the principles we will discuss can be applied in any programming language that has mature mocking library.
+Today I want to show how mocks simplify writing tests and implicitly force you to write better structured code. And although code examples here are written in Rust, the principles we will discuss can be applied in any programming language that has mature mocking library.
 
 ## Benefits of mocks
 
 In my opinion there are three reasons for mocking your code in unit tests:
 
-1. mocks increase tests stability because they shield your logic from having to deal with network, file system, OS handles and other unstable things,
-2. they can reduce number of test cases (due to combinatorical explosion),
+1. mocks increase test stability because they shield your logic from having to deal with network, file system, OS handles and other unstable things,
+2. they can reduce number of test cases (due to combinatorial explosion),
 3. they force you to write clean code because it is easier to test and mock the function that does one thing than the function that does a lot of things.
 
-### Mocks increase tests stability
+### Mocks increase test stability
 
-Lets first write a test for a simple function that calculates how much user must pay for a given quantity of some product. It receives a number - the quantity of bought product, and returns price that it reads, for simplicity, from the file on the disk.
+Let's first write a test for a simple function that calculates how much user must pay for a given quantity of some product. It receives a number - the quantity of bought product, and multiplies it by price that it reads, for simplicity, from file on disk.
 
 ```rust
 pub fn calculate_price(quantity: u32) -> u32 {
@@ -49,9 +49,9 @@ This is, of course, very inconvenient, because:
 1. You are arranging file to test a function that doesn't touch file itself - all it does is get the price from some `get_price()` function.
 2. Now you have `price.txt` file on your disk that you forgot to clean. Or you didn't, but maybe your disk is full, or maybe test's process doesn't have rights to write this file, or maybe another process rewrote this file before you called `get_price()`. And that's just the first `unwrap`, this function can also fail because the value inside file is not a valid number string. All of this produces test failures that are irrelevant to the code that we actually want to test - the body of `calculate_price`.
 
-> If price was read from DB then you'd have to setup a whole test DB just for this one small test.
+> If price was read from DB then you'd have to set up a whole test DB just for this one small test.
 
-3. You are depending on `get_price()` implementation. What if someone from your team changes it, for example, by replacing `price.txt` with `current_price.txt`? The test will fail for irrelevant reason again.)
+3. You are depending on `get_price()` implementation. What if someone from your team changes it, for example, by replacing `price.txt` with `current_price.txt`? The test will fail for irrelevant reason again.
 
 That's where the mocks come to the rescue: instead of depending on `get_price`'s implementation, you set its behavior in test yourself:
 
@@ -79,7 +79,7 @@ Now this test tests only `calculate_price` implementation. It no longer cares ho
 
 ### Mocks reduce the number of test cases
 
-Lets write a simple function that calculate number of vacation days of employee based on his contract type and position. Major part of these days depends on contract types and position can give few bonus days:
+Let's write a simple function that calculates number of vacation days of employee based on his contract type and position. Major part of these days depends on contract type, and position can give a few bonus days:
 
 ```rust
 pub enum Contract { FullTime, PartTime }
@@ -102,14 +102,6 @@ pub fn vacation_days(contract: Contract, position: Position) -> u32 {
 Now let's write tests:
 
 ```rust
-fn vacation_days_test(contract: Contract, position: Position, expected_days: u32) {
-    // Act
-    let actual_days = vacation_days(contract, position);
-
-    // Assert
-    assert_eq!(actual_days, expected_days);
-}
-
 #[test]
 fn vacation_days_ok() {
     test(Contract::FullTime, Position::Junior, 20);
@@ -122,14 +114,14 @@ fn vacation_days_ok() {
     fn test(contract: Contract, position: Position, expected_days: u32) {
         // Act
         let actual_days = vacation_days(contract, position);
-    
+
         // Assert
         assert_eq!(actual_days, expected_days);
     }
 }
 ```
 
-As you can see number of tests is equal to the product of number of possible values of each argument, which in this case is `2 (Contract) x 3 (Position) = 6`. With current implementation number of unit tests will grow very quickly with each new input argument option. For example, if we introduce new `Contract` then the number of tests will be increased by `3` (need to test all existing `Position`s with this new contract). Or if we add new rule that says that employees that worked for more than 2 years get 5 more vacation days, we will have `12` more test cases (all existing test cases multiplied by two cases: when employee worked less than or equal to 2 years and when more).
+As you can see, number of tests is equal to the product of number of possible values of each argument, which in this case is `2 (Contract) x 3 (Position) = 6`. With current implementation, number of unit tests will grow very quickly with each new input argument option. For example, if we introduce new `Contract`, then the number of tests will be increased by `3` (need to test all existing `Position`s with this new contract). Or if we add new rule that says that employees who worked for more than 2 years get 5 more vacation days, we will have `12` more test cases (all existing test cases multiplied by two cases: when employee worked less than or equal to 2 years and when more).
 
 Better way to test this function is to split days calculation logic into separate functions because none of the arguments affects number of days provided by other arguments: doesn't matter if you are junior or middle, on full-time contract you will always get 20 base days.
 
@@ -174,19 +166,19 @@ fn vacation_days_ok() {
 
     // Assert
     assert_eq!(result, contract_days + position_days);  // testing only `vacation_days` logic
-    contract_vacation_days.verify_calls();
-    position_vacation_days.verify_calls();
+    contract_vacation_days::verify_calls();
+    position_vacation_days::verify_calls();
 }
 
 #[test]
 fn contract_vacation_days_ok() {
     test(Contract::FullTime, 20);
     test(Contract::PartTime, 10);
-    
+
     fn test(contract: Contract, expected_days: u32) {
         // Act
         let actual_days = contract_vacation_days(contract);
-    
+
         // Assert
         assert_eq!(actual_days, expected_days);
     }
@@ -197,22 +189,23 @@ fn position_vacation_days_ok() {
     test(Position::Junior, 0);
     test(Position::Middle, 2);
     test(Position::Senior, 5);
-    
+
     fn test(position: Position, expected_days: u32) {
         // Act
         let actual_days = position_vacation_days(position);
-    
+
         // Assert
         assert_eq!(actual_days, expected_days);
     }
 }
 ```
 
-We still have same 6 tests, but if we add new `Contract` we would have 7 tests with mocks and 9 without them. The formula for number of tests is actually quite simple: without mocks it is product of number of possible argument values, with mocks it is their sum + 1, because we need a test for `vacation_days` function that aggregates results from split functions. This way we moved number of tests from geometrical to arithmetical progression.
+We still have same 6 tests, but if we add new `Contract`, we will have 7 tests with mocks and 9 without them. The formula for number of tests is actually quite simple: without mocks it is product of number of possible argument values, with mocks it is their sum + 1, because we need a test for `vacation_days` function that aggregates results from split functions. This way we moved number of tests from geometrical to arithmetical progression.
 
 ### Mocks force you to write clean code
 
 Consider following small function that checks whether it is cold in a given city. It performs http request to weather service and checks whether returned temperature is below zero.
+
 ```rust
 pub fn is_it_cold(city: &str) -> bool {
     let url = format!("https://api.weather.example/temp?city={city}");
@@ -223,14 +216,15 @@ pub fn is_it_cold(city: &str) -> bool {
 ```
 
 Seems very simple, right? But this function actually performs 4 different steps:
+
 1. format url,
 2. perform http request,
 3. parse response body as f64,
 4. check temperature.
 
-If you want to test this function, you will have to write unit tests for all of them. Also, you will need to deploy a real weather api server, because you cannot mock `http::get` function.
+If you want to test this function, you will have to write unit tests for all of them. Also, you will need to deploy a real weather API server, because you cannot mock `http::get` function.
 
-All this pain of writing tests would go away if we refactor our code to be more clean. The main problem is that the process of city's temperature retrieval is inlined in the function. I think it is complex enough that it deserves it's separate function. This both makes our function cleaner and mockable:
+All this pain of writing tests would go away if we refactor our code to be cleaner. The main problem is that the process of city's temperature retrieval is inlined in the function. I think it is complex enough that it deserves its own function. This makes our function both cleaner and mockable:
 
 ```rust
 pub fn is_it_cold(city: &str) -> bool {
@@ -249,6 +243,7 @@ fn get_temperature(city: &str) -> f64 {
 And then it becomes very easy to write tests:
 
 ```rust
+#[test]
 fn temp_is_negative_returns_true() {
     // Arrange
     let city = "macondo";
@@ -262,11 +257,12 @@ fn temp_is_negative_returns_true() {
     get_temperature::verify_calls();
 }
 
+#[test]
 fn temp_is_zero_or_positive_returns_false() {
-    test(0);
-    test(1);
-    
-    fn test(temperature: u64) {
+    test(0.0);
+    test(1.0);
+
+    fn test(temperature: f64) {
         // Arrange
         let city = "macondo";
         get_temperature::setup(city).returns(temperature);
@@ -281,10 +277,12 @@ fn temp_is_zero_or_positive_returns_false() {
 }
 ```
 
-All that's left to do is to write one or two integrations tests for `get_temperature` function that perform real http calls.
+All that's left to do is to write one or two integration tests for `get_temperature` function that perform real http calls.
 
 ## Conclusion
 
-In my experience, inability to mock functions usually hints at badly structured code. Not once various problems and bugs in code became apparent to me only after I tried to write unit-test for some function that required mocking something. So I encourage everyone who wants to create realiable applications to try to cover as much as possible lines of code with test. I think that this is especially important now, when we have all kinds of AI agents ready to find and exploit all types of vulnerabilties. Fortunately though, the same AI agents can automate most of unit-tests writing, so there's not much holding us from increasing test code-coverage.
+In my experience, inability to mock functions usually hints at badly structured code. More than once, various problems and bugs in code became apparent to me only after I tried to write unit test for some function that required mocking something.
+
+So I encourage everyone who wants to create reliable applications to try to cover as many lines of code as possible with tests. I think that this is especially important now, when we have all kinds of AI agents ready to find and exploit all types of vulnerabilities. Fortunately though, the same AI agents can automate most of unit test writing, so there's not much stopping us from increasing test coverage.
 
 That's it for now. I hope this helps you with writing reliable and tested software!
