@@ -20,14 +20,14 @@
 !blog/blog.ts
 !blog/marked.d.ts
 
-!blog/hotreload-in-rust/
-!blog/hotreload-in-rust/**
-
-!blog/how-to-mock-(in-rust)/
-!blog/how-to-mock-(in-rust)/**
+!blog/creating-mocking-library-in-rust/
+!blog/creating-mocking-library-in-rust/**
 
 !blog/why-mock/
 !blog/why-mock/**
+
+!blog/hotreload-in-rust/
+!blog/hotreload-in-rust/**
 
 !scripts/
 !scripts/build-posts.ts
